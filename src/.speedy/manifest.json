@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T17:51:04Z",
+  "generated_at": "2026-11-27T17:55:29Z",
   "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -181,8 +181,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/1.DESIGN_SYSTEM_AND_TOKENS.md": {
-      "sha256": "caca9c01037ed5c7f5d5f9c6c2d4b547869ae2f27f043cceae67a0e5838d4f6c",
-      "size": 5403,
+      "sha256": "15531fad5845bb1aeb4917154a076d7a03b22305aff4323ffc2022e58377b12d",
+      "size": 5960,
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/2.LAYOUT_AND_TEMPLATES.md": {
@@ -201,8 +201,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/2.tabler/1.DESIGN_SYSTEM_AND_TOKENS.md": {
-      "sha256": "58232f1a62514027abfa52ee999d1115eda04112d810e70c284c6f3f0280e63e",
-      "size": 7323,
+      "sha256": "f5a03f91e3776c94eca417c8e5d485c6e98696850249174b25af3de874f18efd",
+      "size": 7878,
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/2.tabler/2.LAYOUT_AND_TEMPLATES.md": {
@@ -221,8 +221,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/3.midnight/1.DESIGN_SYSTEM_AND_TOKENS.md": {
-      "sha256": "3f0e9e554da525e4d1b0026a7c0292ca3bbec78900d1b0f9ab21c98acf6aa7ff",
-      "size": 7143,
+      "sha256": "77c025b37ed8232b180de6207aad997b02e9b75d33f80a5289dcbb4b178955c2",
+      "size": 7848,
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/3.midnight/2.LAYOUT_AND_TEMPLATES.md": {
@@ -241,8 +241,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/README.md": {
-      "sha256": "52e95f4be3c0456decfda6d0249e2765af0c9f6fcf63ffe775fa56ab4fdfce1d",
-      "size": 2212,
+      "sha256": "852f5857a481a74e365ea4751f5eabb7d02dd6e6cebc045fd655fca72c74f22b",
+      "size": 5580,
       "ownership": "kit_owned"
     },
     ".speedy/flows/.gitkeep": {
