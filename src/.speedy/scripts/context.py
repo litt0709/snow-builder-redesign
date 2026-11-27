@@ -420,7 +420,7 @@ def prepare_context_packet(
         "implementer": ["analyst", "architect"],
         "reviewer": ["analyst", "architect", "implementer"],
         "tester": ["analyst", "implementer"],
-        "docs": ["implementer"],
+        "docs": ["architect", "implementer"],
     }
     for needed_st in stage_inputs_map.get(stage_id, []):
         candidate_file = sdir / STAGE_FILES.get(needed_st, "")
@@ -446,6 +446,17 @@ def prepare_context_packet(
                 "path": overview_doc.relative_to(layout.root).as_posix(),
                 "semantic_checksum": semantic_checksum(overview_doc.read_text(encoding="utf-8", errors="replace"))[:16],
                 "reason": "Index kiến trúc nhẹ (WHAT) — đọc trước khi mở tài liệu module chi tiết.",
+            }
+        )
+
+    arch_doc = layout.docs_dir / "architecture" / "architecture.md"
+    if arch_doc.is_file():
+        input_refs.append(
+            {
+                "kind": "architecture_doc",
+                "path": arch_doc.relative_to(layout.root).as_posix(),
+                "semantic_checksum": semantic_checksum(arch_doc.read_text(encoding="utf-8", errors="replace"))[:16],
+                "reason": "Kiến trúc hệ thống cốt lõi (Tech Stack, Data Flow, Schema, API & ADR đã chốt).",
             }
         )
 

@@ -6,7 +6,7 @@ Chỉ chạy một lần khi phát hiện dự án đã có mã nguồn ứng d�
 
 ## Bước S1 — Đề xuất cấu hình `.gitignore` & Xin xác nhận
 
-1. Kiểm tra `.gitignore` tại gốc dự án: chỉ đề xuất thêm phần ignore riêng cho vùng thuộc DevKit nếu người dùng không muốn commit DevKit chung vào repo ứng dụng (`.speedy/`, `ai-workspace/`, `.agents/`, `AGENTS.md`) — **tuyệt đối không xóa hay sửa các dòng `.gitignore` có sẵn của ứng dụng**.
+1. Kiểm tra `.gitignore` và `.git/info/exclude` tại gốc dự án: chỉ ignore `/.speedy/` và `/ai-workspace/` trong `.gitignore`, còn `/.agents/` và `/AGENTS.md` đặt trong `.git/info/exclude` (nếu có `.git/`) để Antigravity luôn quét được slash commands — **tuyệt đối không xóa hay sửa các dòng `.gitignore` có sẵn của ứng dụng**.
 2. Gọi `ask_question` hỏi người dùng:
    - `(Recommended) Chạy Setup — Quét cấu trúc dự án và sinh tài liệu nền vào ai-workspace/docs/`
    - `Bỏ qua Setup — Ghi trạng thái skipped và đi thẳng vào task hiện tại`
@@ -27,7 +27,7 @@ Dùng kết quả JSON (`lang`, `framework`, `entry_points`, `detected_tooling`)
 
 ## Bước S3 — Biên Soạn Tài Liệu Nền & Quy Ước Dự Án
 
-1. Đọc `.speedy/roles/writer.md` (khuyến nghị **Gemini Hydrogen**): lập Topic Map 2 cấp cho các module ứng dụng (loại trừ hoàn toàn `.speedy/`, `.agents/`, `ai-workspace/`), tạo `ai-workspace/docs/architecture/overview.md`, các file chi tiết module và `ai-workspace/docs/CHANGELOG.md`.
+1. Đọc `.speedy/roles/writer.md` (khuyến nghị **Gemini Hydrogen**): lập Topic Map 2 cấp cho các module ứng dụng (loại trừ hoàn toàn `.speedy/`, `.agents/`, `ai-workspace/`), tạo đầy đủ `ai-workspace/docs/architecture/overview.md` (index nhẹ), `ai-workspace/docs/architecture/architecture.md` (kiến trúc tổng thể, data flow, schema, API), các file chi tiết module, `ai-workspace/docs/guides/quickstart.md` và `ai-workspace/docs/CHANGELOG.md`.
 2. Đọc `.speedy/commands/refresh-rule.md` và thực thi để tạo quy ước thực tế tại `ai-workspace/docs/development-rules/`.
 3. Đọc `.speedy/commands/refresh-style.md` và thực thi để tạo `ai-workspace/docs/development-style/STYLE.md`.
 

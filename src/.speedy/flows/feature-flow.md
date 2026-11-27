@@ -44,9 +44,14 @@ python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <sta
    *(Nếu `FAIL`, giữ nguyên `FAIL` và quay về Bước 3 sửa đúng nguyên nhân gốc).*
 3. Ghi `ai-workspace/sessions/<sid>/handoff-5-tester.md` (bảng đối chiếu `AC-xxx` vs kết quả thật) → chạy `state complete --sid <sid> --stage tester`.
 
-## Bước 6 — Docs Manager (`Gemini Hydrogen`)
-1. Đọc `.speedy/roles/docs-manager.md`, đồng bộ đúng tài liệu bị ảnh hưởng trong `ai-workspace/docs/` (giữ `overview.md` gọn).
-2. Ghi `ai-workspace/sessions/<sid>/handoff-6-docs.md` → chạy `state complete --sid <sid> --stage docs`.
+## Bước 6 — Docs Manager & Knowledge Sync (`Gemini Hydrogen`)
+1. Đọc `.speedy/roles/docs-manager.md` + `handoff-2-architect.md` + `handoff-3-implementer.md`.
+2. Đảm bảo **Bộ Knowledge Base Lớp 2** trong `ai-workspace/docs/` đầy đủ cho các phiên chạy sau (tạo mới nếu chưa có, cập nhật phần thay đổi nếu đã có):
+   - `ai-workspace/docs/architecture/overview.md` (Index nhẹ + link tới tài liệu chi tiết)
+   - `ai-workspace/docs/architecture/architecture.md` (**Bắt buộc**: Tech Stack, sơ đồ Mermaid luồng dữ liệu, Data Model/Schema, API Contracts & các quyết định ADR)
+   - `ai-workspace/docs/architecture/<module>.md` (nếu thêm/đổi module lớn, kèm `source_ref`), `ai-workspace/docs/guides/quickstart.md` (lần đầu hoặc khi đổi lệnh chạy) và `ai-workspace/docs/CHANGELOG.md`.
+3. Chạy `python3 -B .speedy/scripts/speedy_cli.py repomap build` để làm mới chỉ mục mã nguồn cho các phiên sau.
+4. Ghi `ai-workspace/sessions/<sid>/handoff-6-docs.md` → chạy `state complete --sid <sid> --stage docs`.
 
 ## Bước 7 — Wrap-up & Báo Cáo Trung Thực (`Gemini Hydrogen`)
 1. Đóng phiên & audit trong 1 lệnh chain:

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T16:39:01Z",
+  "generated_at": "2026-11-27T17:44:49Z",
   "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -251,8 +251,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/feature-flow.md": {
-      "sha256": "ebd71c104d3a9719176c8a7e9ba4f4288d9fcf5e669b70b7dadfc40946aacf25",
-      "size": 4800,
+      "sha256": "e54996c9915a1b76ceb80f04647056696b9ce0e4e1996d1c1554c54fbbf0d4ff",
+      "size": 5603,
       "ownership": "kit_owned"
     },
     ".speedy/flows/fix-flow.md": {
@@ -266,8 +266,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/setup-flow.md": {
-      "sha256": "f1f611c70da78de28753b719fd6c3d74c12ba50cd2d66a57579c2ee9094d69b4",
-      "size": 2384,
+      "sha256": "c512dad5bfe99a6546fda5692e463010cc2a5bf73d61cbb1a880a912bd8dd33b",
+      "size": 2582,
       "ownership": "kit_owned"
     },
     ".speedy/flows/simple-flow.md": {
@@ -296,8 +296,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/docs-manager.md": {
-      "sha256": "f57790a5b30a8fe069fe28f533cf65c30a54bab889710507ae63a0601a8fff4b",
-      "size": 2259,
+      "sha256": "be945b0ad0d49aa35b478b5d969eed55fa1aa3222f1a0a7b6689015b4902d867",
+      "size": 3851,
       "ownership": "kit_owned"
     },
     ".speedy/roles/implementer.md": {
@@ -416,8 +416,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/context.py": {
-      "sha256": "1b9dc413e345ad7d8bd66f56466a8da801c5351d01f4bb29cd71872e5b99ab27",
-      "size": 21251,
+      "sha256": "23683b6fcfa221311c9b1108d25415d34a16a5ad032d7c8a675d074d37de992b",
+      "size": 21778,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/contracts.py": {
