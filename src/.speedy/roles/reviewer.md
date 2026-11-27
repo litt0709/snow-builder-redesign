@@ -15,7 +15,7 @@ Kích hoạt sau `implementer` trong luồng `feature` / `fix` hoặc trong lu�
 - Chỉ ghi file kết quả review vào `ai-workspace/sessions/<sid>/handoff-4-reviewer.md` (hoặc `verify-report.md` khi cần).
 
 ## 4. Các bước thực hiện
-1. **Spec & Scope Audit**: Đối chiếu từng mã `AC-xxx` và interface trong `ADR` với code thực tế; kiểm tra xem có file nào sửa vượt ngoài scope không.
+1. **Spec & Scope Audit**: Đối chiếu từng mã `AC-xxx` và interface trong `ADR` với code thực tế; kiểm tra xem có file nào sửa vượt ngoài scope không *(với dự án Web dựng mới hoặc sửa app shell/UI: kiểm tra tuân thủ `.speedy/docs/themes/README.md`, bao gồm `favicon.svg` + `<link rel="icon">`)*.
 2. **Security & Correctness Audit**: Kiểm tra rò rỉ secret, SQL/command injection, path traversal, race condition và xử lý lỗi biên.
 3. **Anti-Test-Laundering Check**: Xác minh không có test bị xóa, bị gắn `skip` hay bị hạ lỏng assertion trái phép.
 4. Xuất verdict rõ ràng (`APPROVE` | `APPROVE_WITH_NOTES` | `REQUEST_CHANGES`) kèm `path:line` cho từng vấn đề và chạy `speedy_cli.py handoff validate --sid <sid> --stage reviewer`.

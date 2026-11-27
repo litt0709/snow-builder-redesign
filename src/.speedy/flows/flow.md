@@ -46,10 +46,10 @@ Hiển thị banner ngắn gọn trước khi bắt đầu stage đầu tiên:
 ## 3.5. Bước 0d — HITL Gate Chọn Theme Cho Dự Án Web (Lần Đầu Dựng Project)
 
 Chỉ kích hoạt **1 lần duy nhất** khi dựng dự án Web mới (hoặc `ai-workspace/state/setup.json` chưa có trường `selected_theme`) và yêu cầu có giao diện **Web / Frontend / Dashboard / Landing Page**:
-1. Quét danh sách các thư mục mẫu trong `.speedy/docs/themes/` (ví dụ `1.default` — *Apple Clean & Glassmorphism · Light + Dark Mode*, và các mẫu mới được bổ sung sau này).
+1. Quét danh sách các thư mục mẫu trong `.speedy/docs/themes/` (ví dụ `1.default` — *Sky Clean*, `2.tabler` — *Tabler Enterprise*, `3.midnight` — *Midnight Pro*, `4.apple` — *Apple Minimalist*, và các mẫu mới được bổ sung sau này).
 2. Gọi `ask_question` để người dùng chọn mẫu theme mong muốn (kèm tùy chọn *"Tự thiết kế / Không dùng mẫu sẵn"*).
 3. Ghi lựa chọn vào `ai-workspace/state/setup.json` (`"selected_theme": "<ten-thu-muc>"` hoặc `"custom"`).
-4. Truyền đường dẫn `.speedy/docs/themes/<selected_theme>/` cho `Architect` và `Implementer` để đảm bảo giao diện hỗ trợ nhất quán cả **Light Mode** và **Dark Mode**.
+4. Truyền `.speedy/docs/themes/README.md` (quy tắc Typography, Spacing, Brand Logo & Favicon bắt buộc) cùng `.speedy/docs/themes/<selected_theme>/` (nếu chọn mẫu) cho `Architect` và `Implementer` để đảm bảo giao diện nhất quán cả **Light Mode**, **Dark Mode** và đầy đủ **Brand Logo + Favicon**.
 
 ---
 

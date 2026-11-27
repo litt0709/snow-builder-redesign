@@ -21,7 +21,7 @@ python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <sta
 3. Chạy `state complete --sid <sid> --stage analyst`.
 
 ## Bước 2 — Architect (`Gemini Neon` | `Gemini Carbon` nếu phức tạp/rủi ro cao)
-1. Đọc `.speedy/roles/architect.md` + `handoff-1-analyst.md` *(nếu là dự án Web có `selected_theme` trong `ai-workspace/state/setup.json`, đọc thêm `.speedy/docs/themes/<selected_theme>/`)*.
+1. Đọc `.speedy/roles/architect.md` + `handoff-1-analyst.md` *(nếu là dự án Web, đọc thêm `.speedy/docs/themes/README.md` và `.speedy/docs/themes/<selected_theme>/` nếu có `selected_theme` trong `ai-workspace/state/setup.json`; chốt luôn ý tưởng biểu tượng Brand Logo & Favicon gắn với nghiệp vụ service)*.
 2. Lập bảng so sánh phương án, mục `## ADR` (đảm bảo **SSOT**, SOLID/KISS/DRY/YAGNI) và kế hoạch UoW vào `ai-workspace/sessions/<sid>/handoff-2-architect.md`.
 3. **Bootstrap Coding Rules & Style (Chạy 1 lần duy nhất nếu chưa có)**:
    - Nếu chưa tồn tại `ai-workspace/docs/development-rules/coding-convention.md` hoặc `ai-workspace/docs/development-style/STYLE.md`:
@@ -30,7 +30,7 @@ python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <sta
 4. Chạy `state complete --sid <sid> --stage architect`.
 
 ## Bước 3 — Implementer (`Gemini Neon`)
-1. Đọc `.speedy/roles/implementer.md` + `handoff-2-architect.md` + `ai-workspace/docs/development-rules/coding-convention.md` & `ai-workspace/docs/development-style/STYLE.md` (nếu có) để viết code đúng chuẩn Principal Engineer / Repo Style.
+1. Đọc `.speedy/roles/implementer.md` + `handoff-2-architect.md` + `ai-workspace/docs/development-rules/coding-convention.md` & `ai-workspace/docs/development-style/STYLE.md` (nếu có) để viết code đúng chuẩn Principal Engineer / Repo Style *(với dự án Web: tuân thủ `.speedy/docs/themes/README.md`, gồm Typography, Spacing, Tailwind v4 Guardrail và tạo đầy đủ Brand Logo + `favicon.svg` + `<link rel="icon">`)*.
 2. Batch chỉnh sửa mã nguồn trong `scope` đã duyệt; chạy **targeted test / lint nhanh** cho riêng module bị ảnh hưởng (không chạy thừa full suite).
 3. Ghi `ai-workspace/sessions/<sid>/handoff-3-implementer.md` → chạy `state complete --sid <sid> --stage implementer`.
 

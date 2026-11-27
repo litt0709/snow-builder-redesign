@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T18:46:16Z",
+  "generated_at": "2026-11-27T19:07:52Z",
   "file_count": 121,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -261,8 +261,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/README.md": {
-      "sha256": "3ab1ebb968191a5538e2b23f4b66871010668b14d4973405f489f3b2c4f6d340",
-      "size": 6001,
+      "sha256": "89b59c40d38fd4f57d140a22ef5050b4a0df290fc8c6b2dd7be3024745586b39",
+      "size": 9899,
       "ownership": "kit_owned"
     },
     ".speedy/flows/.gitkeep": {
@@ -271,8 +271,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/feature-flow.md": {
-      "sha256": "0bee4ff454f9f99eb68c664c7e14bdffa8d924e2a329866c305090a51617c7f9",
-      "size": 6397,
+      "sha256": "3ebbb86df31bb114f523a810c079c08f5ef69b25210feb02c19528a55e200e77",
+      "size": 6726,
       "ownership": "kit_owned"
     },
     ".speedy/flows/fix-flow.md": {
@@ -281,8 +281,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/flow.md": {
-      "sha256": "d45923e77720e89aef03dbaa029af790c1e532108adc3eca4d005664f074b4d2",
-      "size": 4912,
+      "sha256": "8d3c3392a37b2c24531458c496501488c22fe391fce1e5c4c90838187af08e20",
+      "size": 5114,
       "ownership": "kit_owned"
     },
     ".speedy/flows/setup-flow.md": {
@@ -321,8 +321,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/implementer.md": {
-      "sha256": "8688dadc517cbdc931d5cce2fb910aa981ace7be26d402620ce3765eab11059b",
-      "size": 2402,
+      "sha256": "b5945f9524d2c624f09547f5e85e61e6639b2b1ce0da76b5e2fa91182868198d",
+      "size": 2619,
       "ownership": "kit_owned"
     },
     ".speedy/roles/orchestrator.md": {
@@ -331,8 +331,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/reviewer.md": {
-      "sha256": "8909c2bbb658d8ba76967606e87284aaaabe042b9d15c8d88363bd3e2773957e",
-      "size": 2668,
+      "sha256": "3798ea24f8245e5be915918c630b6ce1cb750fe16ea883e8f8f63672759d43b4",
+      "size": 2833,
       "ownership": "kit_owned"
     },
     ".speedy/roles/specs.md": {
