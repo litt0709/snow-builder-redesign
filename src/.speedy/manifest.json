@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T17:44:49Z",
+  "generated_at": "2026-11-27T17:51:04Z",
   "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -136,13 +136,13 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/refresh-rule.md": {
-      "sha256": "11608e5e75f9c168ada2a22aba66c628f8f22d15de7243f175f802fd18ca348f",
-      "size": 1511,
+      "sha256": "a91fc6cafde46903ca21f8c79af5cceb6cee9df909d902621c9c89c57d7ac429",
+      "size": 2719,
       "ownership": "kit_owned"
     },
     ".speedy/commands/refresh-style.md": {
-      "sha256": "5bcef96cf0977e35cfa210751a4a6a829160aba52aaea0dd6f5f26bbb9b34f30",
-      "size": 1340,
+      "sha256": "bf9b0a2a6035b59409075eaf055cb03519b7cb32fae1b6ab050d1f86030a6cc2",
+      "size": 2182,
       "ownership": "kit_owned"
     },
     ".speedy/commands/repomap.md": {
@@ -251,8 +251,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/feature-flow.md": {
-      "sha256": "e54996c9915a1b76ceb80f04647056696b9ce0e4e1996d1c1554c54fbbf0d4ff",
-      "size": 5603,
+      "sha256": "0bee4ff454f9f99eb68c664c7e14bdffa8d924e2a329866c305090a51617c7f9",
+      "size": 6397,
       "ownership": "kit_owned"
     },
     ".speedy/flows/fix-flow.md": {
@@ -261,8 +261,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/flow.md": {
-      "sha256": "7820f82e7cda5b66bab0985f0cd56685dfbcb2e2f3bf5e77050ad51f1c0ce2e7",
-      "size": 4310,
+      "sha256": "d45923e77720e89aef03dbaa029af790c1e532108adc3eca4d005664f074b4d2",
+      "size": 4912,
       "ownership": "kit_owned"
     },
     ".speedy/flows/setup-flow.md": {
@@ -416,8 +416,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/context.py": {
-      "sha256": "23683b6fcfa221311c9b1108d25415d34a16a5ad032d7c8a675d074d37de992b",
-      "size": 21778,
+      "sha256": "29c4326f2b6e395a345c9793daf8ca361bb52320f49b305d17021dc728bd740c",
+      "size": 22844,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/contracts.py": {

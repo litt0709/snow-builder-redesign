@@ -23,10 +23,14 @@ python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <sta
 ## Bước 2 — Architect (`Gemini Neon` | `Gemini Carbon` nếu phức tạp/rủi ro cao)
 1. Đọc `.speedy/roles/architect.md` + `handoff-1-analyst.md` *(nếu là dự án Web có `selected_theme` trong `ai-workspace/state/setup.json`, đọc thêm `.speedy/docs/themes/<selected_theme>/`)*.
 2. Lập bảng so sánh phương án, mục `## ADR` (đảm bảo **SSOT**, SOLID/KISS/DRY/YAGNI) và kế hoạch UoW vào `ai-workspace/sessions/<sid>/handoff-2-architect.md`.
-3. Chạy `state complete --sid <sid> --stage architect`.
+3. **Bootstrap Coding Rules & Style (Chạy 1 lần duy nhất nếu chưa có)**:
+   - Nếu chưa tồn tại `ai-workspace/docs/development-rules/coding-convention.md` hoặc `ai-workspace/docs/development-style/STYLE.md`:
+     - *Dự án mới (Greenfield)*: Thực thi `.speedy/commands/refresh-rule.md` & `.speedy/commands/refresh-style.md` (dùng `search_web` tra cứu Principal Engineer rules & official style guide mới nhất cho đúng các framework vừa chọn trong `ADR`).
+     - *Dự án đã có code (Brownfield)*: Trích xuất convention & Repo Style từ mã nguồn hiện hữu.
+4. Chạy `state complete --sid <sid> --stage architect`.
 
 ## Bước 3 — Implementer (`Gemini Neon`)
-1. Đọc `.speedy/roles/implementer.md` + `handoff-2-architect.md`.
+1. Đọc `.speedy/roles/implementer.md` + `handoff-2-architect.md` + `ai-workspace/docs/development-rules/coding-convention.md` & `ai-workspace/docs/development-style/STYLE.md` (nếu có) để viết code đúng chuẩn Principal Engineer / Repo Style.
 2. Batch chỉnh sửa mã nguồn trong `scope` đã duyệt; chạy **targeted test / lint nhanh** cho riêng module bị ảnh hưởng (không chạy thừa full suite).
 3. Ghi `ai-workspace/sessions/<sid>/handoff-3-implementer.md` → chạy `state complete --sid <sid> --stage implementer`.
 

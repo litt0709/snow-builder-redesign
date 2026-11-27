@@ -4,11 +4,13 @@
 
 ---
 
-## 1. Bước 0a — Kiểm tra Setup dự án (Lazy Check)
+## 1. Bước 0a — Kiểm tra Setup, Rules & Style dự án (Lazy Check)
 
-- Nếu `ai-workspace/state/setup.json` đã tồn tại (`status` là `done` hoặc `skipped`) → chuyển sang Bước 0b.
-- Nếu dự án mới hoàn toàn (chưa có mã nguồn ứng dụng ngoài `.speedy/`, `.agents/`, `ai-workspace/`) → chuyển sang Bước 0b.
-- Nếu dự án đã có mã nguồn nhưng chưa có `setup.json` → nạp `.speedy/flows/setup-flow.md` thực hiện trước khi vào luồng chính.
+- **Dự án đã có mã nguồn (Brownfield)**:
+  - Nếu chưa có `ai-workspace/state/setup.json` → nạp `.speedy/flows/setup-flow.md` (tự động chạy `scan`, `repomap build`, `/docs` nền, **`/refresh-rule`** và **`/refresh-style`** để nắm đúng convention & code style của các kỹ sư cũ).
+  - Nếu `setup.json` đã có (`status == "done"`) nhưng chưa có `ai-workspace/docs/development-rules/coding-convention.md` hoặc `ai-workspace/docs/development-style/STYLE.md` → chạy bổ sung 1 lần `/refresh-rule` & `/refresh-style` (chế độ Brownfield).
+- **Dự án mới hoàn toàn (Greenfield)**:
+  - Chuyển thẳng sang Bước 0b; ngay sau khi `Architect` chốt Tech Stack/Framework (cuối Bước 2 của `feature-flow.md`), luồng sẽ tự động chạy 1 lần `/refresh-rule` & `/refresh-style` (chế độ Greenfield — `search_web` chuẩn Principal Engineer cho các framework đã chọn) trước khi `Implementer` viết dòng code đầu tiên.
 
 ---
 
@@ -34,7 +36,7 @@ python3 .speedy/scripts/speedy_cli.py session new --slug "<slug>" --goal "<yêu 
 Hiển thị banner ngắn gọn trước khi bắt đầu stage đầu tiên:
 
 ```markdown
-🎯 **Flow Mode**: `<MODE>` | **Policy**: `strict` | **Session**: `<sid>`
+🎯 **Flow Mode**: `<MODE>` | **Policy**: `<balanced|strict>` | **Session**: `<sid>`
 🗺️ **Route**: `<chuỗi stage từ JSON>`
 🤖 **Phân bổ Model**: Orchestrator/Docs (`Gemini Hydrogen`) · Dev/Test (`Gemini Neon`) · Escalation nếu rủi ro cao (`Gemini Carbon`)
 ```

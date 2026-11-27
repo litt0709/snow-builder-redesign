@@ -460,6 +460,30 @@ def prepare_context_packet(
             }
         )
 
+    if stage_id in {"architect", "implementer", "reviewer", "tester"}:
+        for kind_name, rel_sub, desc in (
+            (
+                "coding_rules",
+                Path("development-rules") / "coding-convention.md",
+                "Quy ước lập trình chuẩn của dự án (Brownfield Repo Rules / Greenfield Principal Engineer Rules).",
+            ),
+            (
+                "code_style",
+                Path("development-style") / "STYLE.md",
+                "Style Guide của dự án (ưu tiên Repo Style #1, Official Industry Style #2).",
+            ),
+        ):
+            doc_path = layout.docs_dir / rel_sub
+            if doc_path.is_file():
+                input_refs.append(
+                    {
+                        "kind": kind_name,
+                        "path": doc_path.relative_to(layout.root).as_posix(),
+                        "semantic_checksum": semantic_checksum(doc_path.read_text(encoding="utf-8", errors="replace"))[:16],
+                        "reason": desc,
+                    }
+                )
+
     repomap_res = query_repomap(layout, search_kw, limit=5)
     cross_repo_res = query_cross_repo_registry(layout, search_kw)
 
