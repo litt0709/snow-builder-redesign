@@ -2,8 +2,8 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T18:15:55Z",
-  "file_count": 117,
+  "generated_at": "2026-11-27T18:46:16Z",
+  "file_count": 121,
   "files": {
     ".agents/rules/.gitkeep": {
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -240,9 +240,29 @@
       "size": 1034718,
       "ownership": "kit_owned"
     },
+    ".speedy/docs/themes/4.apple/1.DESIGN_SYSTEM_AND_TOKENS.md": {
+      "sha256": "01f1a97189c84ac528dfe6c7092b42b440c07934ea77cdfad5458a738c075e90",
+      "size": 7557,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/4.apple/2.LAYOUT_AND_TEMPLATES.md": {
+      "sha256": "5f78c36eb33d501c7c2cbe38a2e1432330a0a13d058cca20c8ee9c62169c20c0",
+      "size": 8021,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/4.apple/preview-dark.png": {
+      "sha256": "b778678a7a855d5d3aa48789eb305141b29d69bc32ca7b12d0c1720f40bb2aee",
+      "size": 882520,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/4.apple/preview-light.png": {
+      "sha256": "ba7ef0ea4adf96e40a93f04a25b703a6cec2789bc715c1abf192e5dd3dfea5c4",
+      "size": 769641,
+      "ownership": "kit_owned"
+    },
     ".speedy/docs/themes/README.md": {
-      "sha256": "83d9f8eaac2c76e971ad68f214fd1c251977c9d0e5f51568cd9507d548e54895",
-      "size": 5626,
+      "sha256": "3ab1ebb968191a5538e2b23f4b66871010668b14d4973405f489f3b2c4f6d340",
+      "size": 6001,
       "ownership": "kit_owned"
     },
     ".speedy/flows/.gitkeep": {

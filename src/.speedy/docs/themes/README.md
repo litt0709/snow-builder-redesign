@@ -9,6 +9,7 @@ Thư mục này chứa các bộ **Design System & Layout Template** dựng sẵ
 | `1.default/` | **Sky Clean & Soft Elevation** | Sáng thoáng Light-First (nền `#f1f5f9`, thẻ trắng viền rõ, Sky Blue `#0284c7`), Dark Mode Deep Navy + Sky Cyan (`#38bdf8`), Collapsible Sidebar `240px → 70px` | [preview-light.png](1.default/preview-light.png) · [preview-dark.png](1.default/preview-dark.png) | **Light-First + Dark Mode** |
 | `2.tabler/` | **Tabler Enterprise Admin** | Giao diện quản trị doanh nghiệp sắc nét chuẩn Tabler (Bootstrap 5, font Inter, viền 1px mảnh, KPI sparkline, Data Table & Dark Sidebar) | [preview-light.png](2.tabler/preview-light.png) · [preview-dark.png](2.tabler/preview-dark.png) | **Light Mode + Dark Mode** |
 | `3.midnight/` | **Midnight Pro (Aave-Inspired)** | Dark-first obsidian sang trọng, border bo tròn mềm mại (`20px–24px` & full-pill), font geometric sắc nét, filter emoji icon & Bento Explore Table | [preview-light.png](3.midnight/preview-light.png) · [preview-dark.png](3.midnight/preview-dark.png) | **Dark-First + Light Mode** |
+| `4.apple/` | **Apple Minimalist & Storefront** | Tinh khiết chuẩn Apple.com (`#ffffff` / `#f5f5f7`, Apple Blue `#0071e3`, tiêu đề 2 tông màu, Sticky Split Configurator, thẻ chọn viền `2px` & nút Full-Pill; Dark OLED `#000000`) | [preview-light.png](4.apple/preview-light.png) · [preview-dark.png](4.apple/preview-dark.png) | **Light-First + Dark OLED** |
 
 ---
 

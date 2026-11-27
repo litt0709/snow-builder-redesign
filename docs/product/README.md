@@ -16,7 +16,7 @@
 | `.speedy/flows/` | Kit-owned | Kịch bản **5 chế độ** (`setup`, `feature`, `fix`, `simple`, `verify`) tối ưu cho `balanced` Smart HITL và `state complete` |
 | `.speedy/commands/` | Kit-owned | Đặc tả chi tiết **11 lệnh người dùng** và 2 template chuẩn (`hitl-template.md`, `audit-lifecycle.md`) |
 | `.speedy/rules/` | Kit-owned | Bộ luật lõi AI-DD (`1.principle.md` với 5 Subsystems + 11 Anti-Patterns → `2.framework.md` → `3.orchestration-flow.md` → `4.logs.md` → `5.testing.md`) |
-| `.speedy/docs/themes/` | Kit-owned | Thư viện **3 bộ Web Design Systems** hỗ trợ Light & Dark Mode kèm ảnh preview (`1.default`, `2.tabler`, `3.midnight`) |
+| `.speedy/docs/themes/` | Kit-owned | Thư viện **4 bộ Web Design Systems** hỗ trợ Light & Dark Mode kèm ảnh preview (`1.default`, `2.tabler`, `3.midnight`, `4.apple`) |
 | `.speedy/schemas/` & `.speedy/config/` | Kit-owned | JSON Schema hợp đồng, cấu hình `balanced` mặc định + phân tầng Gemini (`Hydrogen` / `Neon` / `Carbon`) và `source.json` |
 | `.speedy/scripts/` | Kit-owned | Lõi Python 3.11+ stdlib CLI deterministic (`speedy_cli.py` với **Lazy Imports**, cờ **`--compact`**, `state complete`, `installer_core.py`) |
 | `ai-workspace/` | **User Runtime (Preserved 100%)** | Bộ nhớ vận hành dự án (`specs/`, `docs/`, `plans/`, `sessions/`, `state/`, `audit/`, `logs/`, `reports/`, `tmp/`, `.env.example`) — **không bao giờ bị xóa/ghi đè khi update** |
@@ -29,9 +29,10 @@ Khi chạy `/flow` lần đầu trên dự án Web, Speedy tự quét `.speedy/d
 
 | Thư mục | Tên mẫu | Đặc trưng thiết kế | Chế độ màu |
 |---|---|---|---|
-| `1.default/` | **Apple Clean & Glassmorphism** | Tối giản, thẻ nổi bo tròn mềm (`16px–20px`), kính mờ glassmorphism, lưới 8pt | Light + Dark Mode |
+| `1.default/` | **Sky Clean & Soft Elevation** | Sáng thoáng Light-First (Sky Blue `#0284c7`, nền `#f1f5f9`, thẻ trắng viền rõ, Collapsible Sidebar) + Dark Deep Navy Cyan | Light-First + Dark Mode |
 | `2.tabler/` | **Tabler Enterprise Admin** | Chuẩn Bootstrap 5 / Tabler, font Inter, viền 1px sắc nét, KPI sparkline, Data Table & Dark Sidebar | Light + Dark Mode |
 | `3.midnight/` | **Midnight Pro (Aave-Inspired)** | Dark-first obsidian (`#09090d`), border bo tròn mềm (`20px–24px` & full-pill), font geometric, emoji icon & Bento Explore Table | Dark-First + Light Mode |
+| `4.apple/` | **Apple Minimalist & Storefront** | Tinh khiết chuẩn Apple.com (`#ffffff` / `#f5f5f7`, Apple Blue `#0071e3`, tiêu đề 2 tông màu, Sticky Split Configurator, thẻ chọn viền `2px` & nút Full-Pill) | Light-First + Dark OLED |
 
 ---
 
