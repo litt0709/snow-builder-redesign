@@ -21,15 +21,15 @@
 ```mermaid
 flowchart LR
     subgraph Builder["SNOW Builder (Root Repo)"]
-        BR["AGENTS.md + rules/ + .agents/ (Rules, Skills, Workflows)"]
+        BR["AGENTS.md + rules/ + .agents/ (Rules & Skills)"]
         BS["scripts/ (install.sh, install.py, package.py, autotest.py)"]
         BT["tests/ (Static + CLI + Installer + E2E Fixture)"]
         BP["plans/ + sessions/"]
     end
 
     subgraph Product["Speedy DevKit (src/ — Xuất độc lập)"]
-        PA["AGENTS.md + .agents/ (Rules, Skills & Workflows)"]
-        PE[".speedy/ (roles, flows, commands, schemas, scripts)"]
+        PA["AGENTS.md + .agents/ (Rules & 11 Short Skills)"]
+        PE[".speedy/ (roles, flows, commands, rules, themes, scripts)"]
         PW["ai-workspace/ (docs, specs, sessions, state, audit)"]
     end
 
@@ -37,6 +37,6 @@ flowchart LR
     Product -->|"1 lệnh curl | bash / install.py + /update-speedy"| UserApp["Dự án Ứng dụng trên Antigravity (App / CLI / IDE)"]
 ```
 
-- **Ranh giới một chiều**: Builder được phép gọi kiểm thử và đóng gói `src/`, nhưng **không một file nào trong `src/`** được phép import hay trỏ đường dẫn ngược về Builder (URL nguồn Git được lưu runtime tại `.speedy/config/source.local.json` của dự án đích, nằm ngoài `manifest.json`).
-- **Tương thích Dual-Surface**: Hỗ trợ song song `.agents/skills/` (Antigravity App 2.0 / CLI) và thin wrappers `.agents/workflows/` (Antigravity IDE standalone) để mọi slash command ngắn gọn (`/flow`, `/specs`, `/docs`, `/update-speedy`,...) hoạt động nhất quán trên mọi bề mặt.
+- **Ranh giới một chiều**: Builder được phép gọi kiểm thử và đóng gói `src/`, nhưng **không một file code nào trong `src/`** được phép import hay trỏ đường dẫn ngược về Builder (URL nguồn Git được lưu runtime tại `.speedy/config/source.local.json` của dự án đích, nằm ngoài `manifest.json`).
+- **Balanced Smart HITL & Single-Source Skills**: Mặc định chạy `balanced` với lệnh gộp `state complete` (chỉ dừng hỏi người dùng khi có `Open questions`, `high_risk`, `REQUEST_CHANGES`, xung đột hoặc release); toàn bộ 11 lệnh Speedy (`/flow`, `/specs`, `/analyst`, `/docs`, `/update-speedy`...) khai báo duy nhất tại `.agents/skills/` và tích hợp sẵn 3 bộ Web Themes (`1.default`, `2.tabler`, `3.midnight`).
 - Xem chi tiết thiết kế kỹ thuật tại [ARCHITECTURE.md](ARCHITECTURE.md), hướng dẫn cài đặt & cấu hình tại [ANTIGRAVITY_GUIDE.md](ANTIGRAVITY_GUIDE.md) và bản đồ thành phần sản phẩm tại [product/README.md](product/README.md).

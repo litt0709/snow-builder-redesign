@@ -8,9 +8,9 @@
 
 ```mermaid
 flowchart TD
-    User["Người dùng trên Antigravity (App / CLI / IDE)"] --> Adapter["Antigravity Customizations (.agents/rules + skills + workflows)"]
+    User["Người dùng trên Antigravity (App / CLI / IDE)"] --> Adapter["Antigravity Customizations (.agents/rules + .agents/skills)"]
     Adapter --> Orchestrator["Orchestrator Role (Gemini Hydrogen)"]
-    Orchestrator --> CLI["Speedy Deterministic CLI (speedy_cli.py)"]
+    Orchestrator --> CLI["Speedy Deterministic CLI (speedy_cli.py — Lazy Imports & --compact)"]
 
     subgraph Core["Lõi Python (.speedy/scripts/)"]
         CLI --> Lifecycle["lifecycle.py (Session, FSM, Gate, UoW Scheduler)"]
@@ -46,7 +46,7 @@ Policy engine (`policy.py` & `config/policy.default.json`) phân bổ model theo
 | **Module-Level RepoMap** | Đánh chỉ mục cấp module kèm cache mtime, chỉ trả top-N kết quả phù hợp. | Tự làm mới khi cấu trúc thư mục đổi; không bịa module khi không khớp. |
 | **Context Packet (`context prepare`)** | Cấp phát manifest con trỏ chứa đúng `AC`, `ADR` đã duyệt, phạm vi file và lỗi gần nhất. | Không bao giờ cắt bỏ `AC`, `invariants` hay bằng chứng lỗi cốt lõi. |
 | **Selective Invalidation** | Gắn semantic checksum cho từng artifact và fingerprint cho evidence. | Sửa code chỉ làm invalid kết quả review/test cũ, giữ nguyên approval của Brief/ADR nếu thiết kế không đổi. |
-| **Bounded Tool Output** | Giới hạn byte trả ra stdout kèm cờ `truncated` và đường dẫn log đầy đủ. | Agent vẫn đọc tiếp được đoạn log chi tiết trên đĩa khi cần chẩn đoán sâu. |
+| **Bounded Tool Output & Compact CLI** | Giới hạn byte trả ra stdout kèm cờ `truncated`; `speedy_cli.py` dùng **Lazy Imports** (~55ms cold-start), lệnh gộp **`state complete`** (1 lệnh/stage) và cờ **`--compact`** (-25–30% token JSON). | Agent vẫn đọc tiếp được log chi tiết trên đĩa; giảm mạnh độ trễ và token tích lũy mà không bỏ qua bất kỳ kiểm định nào. |
 
 ---
 
@@ -76,4 +76,5 @@ flowchart LR
   3. Khóa `SPEEDY_SOURCE_URL` trong `ai-workspace/.env`
   4. File cấu hình local `.speedy/config/source.local.json` *(nằm ngoài `manifest.json` để không gây xung đột và không rò rỉ URL Builder vào `src/`)*
   5. `.speedy/config/source.json`
-- **Bảo mật & Toàn vẹn**: Mọi lệnh `git ls-remote` / `git clone` đều chặn tham số bắt đầu bằng `-` và sử dụng dấu phân tách `--` để ngăn argument injection; rollback khôi phục nguyên trạng cả file kit-owned, `.gitignore` và `source.local.json`.
+- **Ignore 2 lớp an toàn cho Git & Antigravity**: `ensure_speedy_gitignore()` ghi `/.speedy/` và `/ai-workspace/` vào `.gitignore`, đồng thời ghi `/.agents/` và `/AGENTS.md` vào `.git/info/exclude` (khi dự án là Git repo) để Git không push nhầm nhưng Antigravity vẫn quét đầy đủ slash commands.
+- **Bảo mật & Toàn vẹn**: Mọi lệnh `git ls-remote` / `git clone` đều chặn tham số bắt đầu bằng `-` và sử dụng dấu phân tách `--` để ngăn argument injection; rollback khôi phục nguyên trạng cả file kit-owned, `.gitignore`, `.git/info/exclude` và `source.local.json`.

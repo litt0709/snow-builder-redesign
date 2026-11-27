@@ -14,7 +14,7 @@
 |---|---|---|
 | **Antigravity Permissions & Sandbox** | Cho phép đọc/sửa file trong workspace và chạy lệnh test an toàn không hỏi vụn vặt từng dòng | Quyền sửa file của IDE **không** tự động phê duyệt chuyển stage của Speedy |
 | **Plan Review Policy** | Kiểm soát việc duyệt kế hoạch tổng của IDE (`Always Ask` cho chế độ `strict`) | Độc lập với Handoff Gate của từng vai trò chuyên môn |
-| **Speedy Stage Gate (`strict`)** | Chặn chuyển stage qua `speedy_cli.py` cho đến khi có `ask_question` xác nhận từ con người | Cưỡng chế ở mức `workflow_enforced` |
+| **Speedy Stage Gate (`balanced` mặc định / `strict`)** | Mặc định `balanced` (Smart HITL): `state complete` tự đi tiếp ở stage rủi ro thấp không có câu hỏi mở, chỉ dừng gọi `ask_question` khi có `Open questions`, `high_risk`, `REQUEST_CHANGES`, xung đột hoặc release | Cưỡng chế ở mức `workflow_enforced` |
 
 ### 1.2. Thiết Lập Khuyến Nghị Trong Settings Của Antigravity
 
@@ -55,7 +55,7 @@ Mở terminal ngay tại **thư mục gốc dự án ứng dụng của bạn** 
 curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash
 ```
 
-Lệnh này tự động tải bản mới nhất (tag `speedy-vX.Y.Z` cao nhất hoặc fallback nhánh `main`), cài Speedy kèm `--skip-conflicts`, tự tạo/cập nhật `.gitignore` (thêm `/.agents/`, `/.speedy/`, `/ai-workspace/`, `/AGENTS.md`) và lưu nguồn vào `.speedy/config/source.local.json` để các lần sau chỉ cần chạy `/update-speedy`.
+Lệnh này tự động tải bản mới nhất (tag `speedy-vX.Y.Z` cao nhất hoặc fallback nhánh `main`), cài Speedy kèm `--skip-conflicts`, cập nhật ignore 2 lớp (`.gitignore` cho `/.speedy/`, `/ai-workspace/` và `.git/info/exclude` cho `/.agents/`, `/AGENTS.md` để Antigravity luôn quét được slash commands) và lưu nguồn vào `.speedy/config/source.local.json` để các lần sau chỉ cần chạy `/update-speedy`.
 
 ### Cách 2: Cài đặt cục bộ từ thư mục **SNOW Builder**
 
