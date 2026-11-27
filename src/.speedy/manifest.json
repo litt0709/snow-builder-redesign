@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T17:55:29Z",
+  "generated_at": "2026-11-27T18:15:30Z",
   "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -181,8 +181,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/1.DESIGN_SYSTEM_AND_TOKENS.md": {
-      "sha256": "15531fad5845bb1aeb4917154a076d7a03b22305aff4323ffc2022e58377b12d",
-      "size": 5960,
+      "sha256": "b12ff95930a7cf7548ed2270120b1247f76d890b90b196b147a0fd416ad91767",
+      "size": 6855,
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/2.LAYOUT_AND_TEMPLATES.md": {
@@ -196,8 +196,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/preview-light.png": {
-      "sha256": "b2ff6e9916f5f5a6aba4c6af89692291bef86b198a107a5a19e62b6c787203e6",
-      "size": 1134104,
+      "sha256": "e1859a3e66a899b15795062e36deb023bc491a210ac7d2b911462d98654d8e39",
+      "size": 820993,
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/2.tabler/1.DESIGN_SYSTEM_AND_TOKENS.md": {
@@ -241,8 +241,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/README.md": {
-      "sha256": "852f5857a481a74e365ea4751f5eabb7d02dd6e6cebc045fd655fca72c74f22b",
-      "size": 5580,
+      "sha256": "83d9f8eaac2c76e971ad68f214fd1c251977c9d0e5f51568cd9507d548e54895",
+      "size": 5626,
       "ownership": "kit_owned"
     },
     ".speedy/flows/.gitkeep": {
