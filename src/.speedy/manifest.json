@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T16:08:01Z",
+  "generated_at": "2026-11-27T16:21:15Z",
   "file_count": 128,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -496,8 +496,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/installer_core.py": {
-      "sha256": "4f38446247d5c8095eb622df956e1ceea623ffedcbd4cbc13d127ddf37793e99",
-      "size": 35658,
+      "sha256": "7054bbc96a3b7f7429cbe0c19c67e03c9be8a63a7cfe84ee3136a2021750bcea",
+      "size": 37407,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/lifecycle.py": {
@@ -531,8 +531,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/storage.py": {
-      "sha256": "406f00c9527838c0adcfe92dc1d7fdfad91a0346b2cbead646e3c8447f4ccedb",
-      "size": 15021,
+      "sha256": "8b36d96aaa7dfe5d9bdc4c48ad81622029e2a1ddadfbc462264fb4f79dfe5e68",
+      "size": 15118,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/verification.py": {

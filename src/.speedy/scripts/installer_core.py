@@ -31,10 +31,15 @@ LOCAL_SOURCE_CONFIG_REL = ".speedy/config/source.local.json"
 
 SPEEDY_GITIGNORE_BEGIN = "# >>> Speedy DevKit (local) >>>"
 SPEEDY_GITIGNORE_END = "# <<< Speedy DevKit (local) <<<"
+# Chỉ đưa .speedy/ và ai-workspace/ vào .gitignore; KHÔNG đưa .agents/ và AGENTS.md vào .gitignore
+# vì bộ quét của Antigravity IDE bỏ qua thư mục nằm trong .gitignore (sẽ làm ẩn toàn bộ slash commands).
 SPEEDY_GITIGNORE_ENTRIES = (
-    "/.agents/",
     "/.speedy/",
     "/ai-workspace/",
+)
+# .agents/ và AGENTS.md được ignore cục bộ qua .git/info/exclude (Git không commit/push nhưng IDE vẫn đọc đầy đủ).
+SPEEDY_GIT_EXCLUDE_ENTRIES = (
+    "/.agents/",
     "/AGENTS.md",
 )
 
@@ -83,15 +88,11 @@ def write_local_source_config(
     }
 
 
-def ensure_speedy_gitignore(target_root: Path) -> Dict[str, Any]:
-    """
-    Thêm (hoặc đồng bộ) khối ignore của Speedy DevKit vào `.gitignore` của dự án đích
-    một cách idempotent mà tuyệt đối không sửa hay xóa các dòng có sẵn của người dùng.
-    """
-    gi_path = target_root.resolve() / ".gitignore"
-    block = "\n".join([SPEEDY_GITIGNORE_BEGIN, *SPEEDY_GITIGNORE_ENTRIES, SPEEDY_GITIGNORE_END]) + "\n"
-    existed = gi_path.is_file()
-    existing = gi_path.read_text(encoding="utf-8", errors="replace") if existed else ""
+def _upsert_ignore_block(file_path: Path, entries: Tuple[str, ...]) -> str:
+    """Chèn hoặc cập nhật idempotent khối Speedy ignore vào một file ignore mà không chạm vào dòng khác."""
+    block = "\n".join([SPEEDY_GITIGNORE_BEGIN, *entries, SPEEDY_GITIGNORE_END]) + "\n"
+    existed = file_path.is_file()
+    existing = file_path.read_text(encoding="utf-8", errors="replace") if existed else ""
 
     pattern = re.compile(
         rf"{re.escape(SPEEDY_GITIGNORE_BEGIN)}.*?{re.escape(SPEEDY_GITIGNORE_END)}\r?\n?",
@@ -107,9 +108,37 @@ def ensure_speedy_gitignore(target_root: Path) -> Dict[str, Any]:
         action = "created" if not existed else "appended"
 
     if action != "unchanged":
-        atomic_write_bytes(gi_path, new_content.encode("utf-8"))
+        atomic_write_bytes(file_path, new_content.encode("utf-8"))
+    return action
 
-    return {"action": action, "path": ".gitignore", "entries": list(SPEEDY_GITIGNORE_ENTRIES)}
+
+def ensure_speedy_gitignore(target_root: Path) -> Dict[str, Any]:
+    """
+    Cập nhật ignore 2 lớp an toàn cho cả Git lẫn Antigravity IDE:
+    - `.gitignore`: chỉ thêm `/.speedy/` và `/ai-workspace/`.
+    - `.git/info/exclude` (nếu dự án là Git repo): thêm `/.agents/` và `/AGENTS.md` để Git không push nhầm
+      nhưng Antigravity IDE vẫn quét được đầy đủ slash commands & rules.
+    """
+    root = target_root.resolve()
+    gi_path = root / ".gitignore"
+    gi_action = _upsert_ignore_block(gi_path, SPEEDY_GITIGNORE_ENTRIES)
+
+    git_dir = root / ".git"
+    exclude_action = "skipped_no_git_dir"
+    if git_dir.is_dir():
+        exclude_path = git_dir / "info" / "exclude"
+        exclude_action = _upsert_ignore_block(exclude_path, SPEEDY_GIT_EXCLUDE_ENTRIES)
+
+    return {
+        "action": gi_action,
+        "path": ".gitignore",
+        "entries": list(SPEEDY_GITIGNORE_ENTRIES),
+        "git_exclude": {
+            "action": exclude_action,
+            "path": ".git/info/exclude",
+            "entries": list(SPEEDY_GIT_EXCLUDE_ENTRIES),
+        },
+    }
 
 
 def parse_semver(version_str: str) -> Tuple[int, int, int, str]:
@@ -394,6 +423,9 @@ def apply_install_or_update(
     had_prev_gitignore = (target / ".gitignore").is_file()
     if update_gitignore and had_prev_gitignore:
         overwritten_or_removed.append(".gitignore")
+    had_prev_git_exclude = (target / ".git" / "info" / "exclude").is_file()
+    if update_gitignore and had_prev_git_exclude:
+        overwritten_or_removed.append(".git/info/exclude")
     will_write_local_source = bool(source_meta and str(source_meta.get("source_url") or "").strip())
     had_prev_local_source = (target / LOCAL_SOURCE_CONFIG_REL).is_file()
     if will_write_local_source and had_prev_local_source:
@@ -415,6 +447,7 @@ def apply_install_or_update(
         "backed_up_files": overwritten_or_removed,
         "had_previous_manifest": (target / ".speedy" / "manifest.json").is_file(),
         "had_previous_gitignore": had_prev_gitignore,
+        "had_previous_git_exclude": had_prev_git_exclude,
         "gitignore_updated": bool(update_gitignore),
         "had_previous_local_source": had_prev_local_source,
         "local_source_updated": will_write_local_source,
@@ -512,6 +545,12 @@ def rollback_from_backup(backup_dir: Path, target_root: Optional[Path] = None) -
         (target / ".speedy" / "manifest.json").unlink()
     if meta.get("gitignore_updated") and not meta.get("had_previous_gitignore") and (target / ".gitignore").is_file():
         (target / ".gitignore").unlink()
+    if (
+        meta.get("gitignore_updated")
+        and not meta.get("had_previous_git_exclude")
+        and (target / ".git" / "info" / "exclude").is_file()
+    ):
+        (target / ".git" / "info" / "exclude").unlink()
     if (
         meta.get("local_source_updated")
         and not meta.get("had_previous_local_source")

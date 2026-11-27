@@ -58,7 +58,9 @@ curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main
 Lệnh trên sẽ tự động:
 1. Tải bản mới nhất từ Git (ưu tiên tag phát hành `speedy-vX.Y.Z` cao nhất; tự động lấy nhánh `main` nếu chưa gắn tag) vào thư mục tạm rồi dọn sạch sau khi xong.
 2. Cài đặt Speedy DevKit vào dự án (bảo toàn 100% file có sẵn của dự án nhờ `--skip-conflicts` và tự tạo backup tại `ai-workspace/tmp/backups/`).
-3. **Tự động cập nhật `.gitignore` ở root dự án** (tạo mới nếu chưa có, nối thêm idempotent nếu đã có) gồm `/.agents/`, `/.speedy/`, `/ai-workspace/`, `/AGENTS.md` để không đẩy nhầm Speedy lên repo dự án.
+3. **Tự động cập nhật ignore 2 lớp an toàn cho cả Git lẫn Antigravity IDE**:
+   - Ghi `/.speedy/` và `/ai-workspace/` vào `.gitignore` (tạo mới nếu chưa có, nối idempotent nếu đã có).
+   - Ghi `/.agents/` và `/AGENTS.md` vào `.git/info/exclude` (nếu dự án là Git repo) thay vì `.gitignore` — giúp Git không đẩy nhầm Speedy lên repo dự án nhưng **Antigravity IDE vẫn quét và hiển thị đầy đủ slash commands (`/flow`, `/specs`, `/docs`, `/update-speedy`...)**.
 4. Tự động ghi nhớ nguồn cài đặt vào `.speedy/config/source.local.json` (nằm ngoài manifest) để **các lần sau cập nhật Speedy bạn chỉ cần gõ slash command `/update-speedy`** trên Antigravity IDE.
 
 **Các biến thể hữu ích khi chạy 1 lệnh:**

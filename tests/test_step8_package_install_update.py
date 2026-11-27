@@ -136,12 +136,13 @@ class TestStep8PackageInstallUpdateRollback(unittest.TestCase):
             self.assertEqual(up_to_date["status"], "UP_TO_DATE")
 
     def test_auto_gitignore_idempotent_and_rollback(self) -> None:
-        """Khi cài Speedy, tự động thêm block ignore cho .agents/.speedy/ai-workspace/AGENTS.md và rollback sạch."""
+        """Khi cài Speedy, .gitignore chỉ ignore .speedy/ & ai-workspace/ (không chặn Antigravity quét .agents/); .git/info/exclude ignore .agents/ & AGENTS.md."""
         with tempfile.TemporaryDirectory() as tmp:
             pkg = Path(tmp) / "pkg"
             export_clean_package(SRC_ROOT, pkg)
             app = Path(tmp) / "user_app"
             app.mkdir()
+            (app / ".git" / "info").mkdir(parents=True)
             (app / ".gitignore").write_text("node_modules/\n.env\n", encoding="utf-8")
 
             res1 = apply_install_or_update(pkg, app, dry_run=False)
@@ -149,22 +150,28 @@ class TestStep8PackageInstallUpdateRollback(unittest.TestCase):
             self.assertEqual(res1["gitignore"]["action"], "appended")
             gi_text = (app / ".gitignore").read_text(encoding="utf-8")
             self.assertIn("node_modules/", gi_text)
-            self.assertIn("/.agents/", gi_text)
             self.assertIn("/.speedy/", gi_text)
             self.assertIn("/ai-workspace/", gi_text)
-            self.assertIn("/AGENTS.md", gi_text)
+            self.assertNotIn("/.agents/", gi_text)
+            self.assertNotIn("/AGENTS.md", gi_text)
 
-            # Cài lại lần 2 -> không nhân đôi block .gitignore
+            ex_text = (app / ".git" / "info" / "exclude").read_text(encoding="utf-8")
+            self.assertIn("/.agents/", ex_text)
+            self.assertIn("/AGENTS.md", ex_text)
+
+            # Cài lại lần 2 -> không nhân đôi block .gitignore và .git/info/exclude
             res2 = apply_install_or_update(pkg, app, dry_run=False)
             self.assertEqual(res2["gitignore"]["action"], "unchanged")
+            self.assertEqual(res2["gitignore"]["git_exclude"]["action"], "unchanged")
             self.assertEqual((app / ".gitignore").read_text(encoding="utf-8").count("# >>> Speedy DevKit (local) >>>"), 1)
 
-            # Rollback về trước khi cài -> khôi phục đúng .gitignore gốc của user
+            # Rollback về trước khi cài -> khôi phục đúng .gitignore gốc và xóa .git/info/exclude mới tạo
             rollback_from_backup(Path(res1["backup_dir"]), app)
             self.assertEqual((app / ".gitignore").read_text(encoding="utf-8"), "node_modules/\n.env\n")
+            self.assertFalse((app / ".git" / "info" / "exclude").exists())
 
     def test_auto_gitignore_creates_when_missing_and_removes_on_rollback(self) -> None:
-        """Nếu dự án đích chưa có .gitignore, tự tạo mới đủ 4 mục và xóa sạch khi rollback."""
+        """Nếu dự án đích chưa có .gitignore, tự tạo mới với /.speedy/ & /ai-workspace/ và xóa sạch khi rollback."""
         with tempfile.TemporaryDirectory() as tmp:
             pkg = Path(tmp) / "pkg"
             export_clean_package(SRC_ROOT, pkg)
@@ -180,8 +187,9 @@ class TestStep8PackageInstallUpdateRollback(unittest.TestCase):
             )
             self.assertEqual(res["gitignore"]["action"], "created")
             gi_text = (app / ".gitignore").read_text(encoding="utf-8")
-            for entry in ("/.agents/", "/.speedy/", "/ai-workspace/", "/AGENTS.md"):
-                self.assertIn(entry, gi_text)
+            self.assertIn("/.speedy/", gi_text)
+            self.assertIn("/ai-workspace/", gi_text)
+            self.assertNotIn("/.agents/", gi_text)
             self.assertTrue((app / ".speedy" / "config" / "source.local.json").is_file())
 
             rollback_from_backup(Path(res["backup_dir"]), app)

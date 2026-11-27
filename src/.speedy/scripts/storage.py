@@ -76,6 +76,10 @@ def atomic_write_bytes(path: Path, payload: bytes) -> None:
             handle.write(payload)
             handle.flush()
             os.fsync(handle.fileno())
+        try:
+            os.chmod(str(tmp_path), 0o644)
+        except OSError:
+            pass
         os.replace(str(tmp_path), str(path))
     except Exception:
         if tmp_path.exists():
