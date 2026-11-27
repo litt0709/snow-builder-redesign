@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T18:15:30Z",
+  "generated_at": "2026-11-27T18:15:55Z",
   "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -191,8 +191,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/preview-dark.png": {
-      "sha256": "f9bca0795a9493031fd652f32a400b8e11ac63e15a66600ed455bec05dbff201",
-      "size": 954032,
+      "sha256": "09d099a936f4a899c3d0f3e6443396069423679814ca13753a33e2f2d869e798",
+      "size": 965928,
       "ownership": "kit_owned"
     },
     ".speedy/docs/themes/1.default/preview-light.png": {
