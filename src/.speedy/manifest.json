@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T19:07:52Z",
+  "generated_at": "2026-11-27T19:15:01Z",
   "file_count": 121,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -416,8 +416,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/audit_viewer.py": {
-      "sha256": "1b22fb237f9c824015db0fcc40c3a044b9c508aa95e00aa9b23537ad7fdac90d",
-      "size": 10727,
+      "sha256": "b8babc67d9432d37c18666d3a6297884f7e44bc4d8298ab32b907d4a2bc65890",
+      "size": 30813,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/benchmark.py": {
@@ -446,8 +446,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/docs_viewer.py": {
-      "sha256": "69e3c5e56423d5fef05732ea6661dcd62ccb85f931a3161f098b8b30d3276c37",
-      "size": 10735,
+      "sha256": "d5e5d35c454659e2655947da8fd08c51da067b1352479858bcbe2a02598c2523",
+      "size": 25227,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/handoff.py": {
