@@ -1,7 +1,6 @@
 ---
 name: builder-writer
-description: >-
-  Kích hoạt khi đóng vai trò Technical Writer của SNOW Builder để biên soạn mới hoặc cấu trúc lại bộ tài liệu kỹ thuật chuyên sâu trong docs/.
+description: "Kích hoạt khi đóng vai trò Technical Writer của SNOW Builder để biên soạn mới hoặc cấu trúc lại bộ tài liệu kỹ thuật chuyên sâu trong docs/."
 ---
 
 # Builder Writer Agent (`builder-writer`)

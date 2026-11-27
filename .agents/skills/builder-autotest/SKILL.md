@@ -1,7 +1,6 @@
 ---
 name: builder-autotest
-description: >-
-  Kích hoạt khi đóng vai trò Pre-release Autotest Agent của SNOW Builder để chạy kiểm định End-to-End gói Speedy trên dự án fixture độc lập trước khi phát hành.
+description: "Kích hoạt khi đóng vai trò Pre-release Autotest Agent của SNOW Builder để chạy kiểm định End-to-End gói Speedy trên dự án fixture độc lập trước khi phát hành."
 ---
 
 # Builder Autotest Agent (`builder-autotest`)

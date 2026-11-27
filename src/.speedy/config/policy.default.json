@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "ide_target": "antigravity",
-  "default_profile": "strict",
+  "default_profile": "balanced",
   "model_routing": {
     "provider": "gemini-pro-antigravity",
     "default_model": "Gemini Neon",
@@ -61,15 +61,23 @@
     "balanced": {
       "gate_policy": "balanced",
       "auto_pass_stages": [
-        "implementer",
-        "docs"
-      ],
-      "mandatory_human_stages": [
+        "bootstrap",
         "analyst",
         "architect",
+        "implementer",
         "reviewer",
         "tester",
-        "verify_report"
+        "docs",
+        "verify_report",
+        "wrapup"
+      ],
+      "hitl_triggers": [
+        "high_risk",
+        "open_questions",
+        "reviewer_request_changes",
+        "verification_failed",
+        "file_conflicts",
+        "release_or_push"
       ],
       "max_uow_attempts": 3,
       "max_parallel_workers": 2,

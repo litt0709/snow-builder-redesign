@@ -1,4 +1,4 @@
-# `/docs-view` (`speedy-docs-view`) — Kết Xuất Trình Đọc Tài Liệu HTML
+# `/docs-view` — Kết Xuất Trình Đọc Tài Liệu HTML
 
 ## Mô tả
 Kết xuất toàn bộ tài liệu Markdown bên trong `ai-workspace/docs/` thành một trang HTML độc lập, hoạt động offline kèm cây mục lục phân cấp.

@@ -2,8 +2,8 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T15:06:34Z",
-  "file_count": 109,
+  "generated_at": "2026-11-27T16:08:01Z",
+  "file_count": 128,
   "files": {
     ".agents/rules/.gitkeep": {
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -30,59 +30,114 @@
       "size": 0,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-analyst/SKILL.md": {
-      "sha256": "e0edb4d20ff8f87df13775b0e5a3fbb6214b07638f6001986c5f4355947fdb73",
-      "size": 1006,
+    ".agents/skills/analyst/SKILL.md": {
+      "sha256": "8e42d576fa17706e650e35059214b2ef4fdefc032e4ae41fae2e30341945f23d",
+      "size": 996,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-audit-view/SKILL.md": {
-      "sha256": "4328c7edb2adbca0067b696e4147981fbc9a447e272c5968790ea3bbf53ef00c",
-      "size": 584,
+    ".agents/skills/audit-view/SKILL.md": {
+      "sha256": "251a7251368d7f276295698471e6ed03d109f1b69d5119df4dda1d6258f6c929",
+      "size": 574,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-cleanup/SKILL.md": {
-      "sha256": "2f67b71df0a365f3d7a5c155f2e92545a7d7f03362bc3f832643d409f1ed5de3",
-      "size": 699,
+    ".agents/skills/cleanup/SKILL.md": {
+      "sha256": "27e224eb4ff33cb07e4fc7cd654b368f87bc8f11a4c03be888c0bf11bdf09d38",
+      "size": 689,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-docs/SKILL.md": {
-      "sha256": "abbea81b048aa481900000266ea716cfb8ae41fc9598a2d7928bd071c0c37e22",
-      "size": 963,
+    ".agents/skills/docs/SKILL.md": {
+      "sha256": "29fe580efd86dbb1c45ffc27b5f639f04a0f156a194a4c8179db332a2c6f457f",
+      "size": 953,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-docs-view/SKILL.md": {
-      "sha256": "75f7ad8275825f111d9d244a897a0fa931465711b9cae06d50af4e1c33fc18ed",
-      "size": 688,
+    ".agents/skills/docs-view/SKILL.md": {
+      "sha256": "87d83d09e581c9f4004d855d1dee7b4c190f930ba1b4d7005ee150b9d8117dd2",
+      "size": 678,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-flow/SKILL.md": {
-      "sha256": "97091e53dbaee2998ecf69c6f9b8b61288a5bd023626a4a0820496392b0e564a",
-      "size": 1337,
+    ".agents/skills/flow/SKILL.md": {
+      "sha256": "8abe0bf8f8a2fc0b288af5459fedce0717ddae9cd68c359aa67f4c59de6e6be0",
+      "size": 1325,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-refresh-rule/SKILL.md": {
-      "sha256": "e5e1697181f162465f3a93971c085879fa97661ce1e282ae9c35a019c2673aa5",
-      "size": 837,
+    ".agents/skills/refresh-rule/SKILL.md": {
+      "sha256": "4c1053e001ffcb57833cf2b7c055d7b71e92552630c701d436cfa6aa88e3262d",
+      "size": 827,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-refresh-style/SKILL.md": {
-      "sha256": "9cf3541809b2d41c896ad2f93f60d74a3ae31d67b98aa247c803a7b81160ef84",
-      "size": 820,
+    ".agents/skills/refresh-style/SKILL.md": {
+      "sha256": "f639cb406625048c821ff6ced8ef5e07a6f384bb53ed722bbf68591407164709",
+      "size": 810,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-repomap/SKILL.md": {
-      "sha256": "1eff568d1584c507f754b9b0c8cac3806e33edc66e5f32b2efd44c90d5e46f6d",
-      "size": 621,
+    ".agents/skills/repomap/SKILL.md": {
+      "sha256": "65b2aa241273537d6f3b3d882c718a6857ef7f7cd4a6c1934e42152fe0cd3288",
+      "size": 611,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-specs/SKILL.md": {
-      "sha256": "22487aecc63619d35242182e410aa03a88902e9903556028139e18bd605c43dd",
-      "size": 1483,
+    ".agents/skills/specs/SKILL.md": {
+      "sha256": "c89555684985528f09664bc1080cc02383139a95d42853651232e8210f036597",
+      "size": 1473,
       "ownership": "kit_owned"
     },
-    ".agents/skills/speedy-update/SKILL.md": {
-      "sha256": "d37945d8edfa04bc85838e69820762980026eeb57c8eb9df7c95227051dbe317",
-      "size": 824,
+    ".agents/skills/update-speedy/SKILL.md": {
+      "sha256": "0bd1530d324fb510ca4c6cfd94d38a91f1b493712cb1997cf5dcafe1d6c083f4",
+      "size": 1849,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/analyst.md": {
+      "sha256": "731a7a831b9d54dd027990babd9a93db5c558e2736a208a430a9e808c2856632",
+      "size": 340,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/audit-view.md": {
+      "sha256": "90331bb9c9be65b0e6eb251a14be360e9253169d9a7255ae5645434e29e216b1",
+      "size": 285,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/cleanup.md": {
+      "sha256": "93aaf82a8d87e2b07cd36ce9327326da2ab8a551fbce7b45a4809a2558f82297",
+      "size": 312,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/docs-view.md": {
+      "sha256": "ba3143f0ac9f85659379f552e1a82142be894b250440ceb8a0ced2f04c75a164",
+      "size": 298,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/docs.md": {
+      "sha256": "c31d66725ffeec4a076a11768c3e375c8339bcd9044c14f46ab75b656c2a8194",
+      "size": 276,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/flow.md": {
+      "sha256": "4a3e8735d02ffb29ccb8057669fc1e50f6959dda7dd2fb21f40c3cf0415259c9",
+      "size": 406,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/refresh-rule.md": {
+      "sha256": "e9c473dec83a56fca88070a4a930daea50f90dde3580066a0c0410bd986f754c",
+      "size": 355,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/refresh-style.md": {
+      "sha256": "17bb9a7cc577fd69289e5b0715436fc4d8238b4c8086868ebe239cc590f27f7c",
+      "size": 358,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/repomap.md": {
+      "sha256": "2a6fe295861080e357f327d1f5b50e2ef9292fd186de6aa8832f30b658e01959",
+      "size": 293,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/specs.md": {
+      "sha256": "7c1926995de3f393dedcddb00992238ebb9058bb67f26d0b27cf99d28c827639",
+      "size": 421,
+      "ownership": "kit_owned"
+    },
+    ".agents/workflows/update-speedy.md": {
+      "sha256": "8e7f8aa8f0aa015248d1e8f393e5bb243e6bcb900807bb61034d72539c188994",
+      "size": 380,
       "ownership": "kit_owned"
     },
     ".speedy/VERSION": {
@@ -96,8 +151,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/analyst.md": {
-      "sha256": "8f11dae833c48fa2475a030c74e9eb3283bf82bfeb394721ff6313278195304a",
-      "size": 1287,
+      "sha256": "3ac5b21cbb3d53b7d932b6f25a29a193a13b94f172aed39d8f14f2c4313d2cae",
+      "size": 1268,
       "ownership": "kit_owned"
     },
     ".speedy/commands/audit-lifecycle.md": {
@@ -106,28 +161,28 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/audit-view.md": {
-      "sha256": "451cbdc12e7759ecb9da2faabec34bfb3c0a38a916adf10bb0fd239cb0982285",
-      "size": 1249,
+      "sha256": "c3475e6b0816dc02e20e8b43e3cc8b01297817c21d0b39657d428cc8ae98fd25",
+      "size": 1227,
       "ownership": "kit_owned"
     },
     ".speedy/commands/cleanup.md": {
-      "sha256": "ccaa59d677a2e5297adf5473f56c57a566fcbf4b307e2350f5bd47027b830864",
-      "size": 1555,
+      "sha256": "e2429edb7802f5a93f113bca3242451246bf4e63ef2172c6fb3e60b41bce8626",
+      "size": 1536,
       "ownership": "kit_owned"
     },
     ".speedy/commands/docs-view.md": {
-      "sha256": "c2dd1ad03aad2dd5691d5d589a95818119131b22c9b443ccdfde86e46350f42f",
-      "size": 1378,
+      "sha256": "ffcbfdd041f645fc8d3bab08cf406c3edd6d61a9e9abbca31959862c314ffdbd",
+      "size": 1357,
       "ownership": "kit_owned"
     },
     ".speedy/commands/docs.md": {
-      "sha256": "1023e8512cf0c374e012649d99d9c909d58ec3de675d1508cf62e126d18a3780",
-      "size": 1693,
+      "sha256": "4cc3b20ebf404292c547f4dd60e6987aa102e6f32147cb2af98a81d52b3ef5c7",
+      "size": 1677,
       "ownership": "kit_owned"
     },
     ".speedy/commands/flow.md": {
-      "sha256": "2d002805b5af28d4bf7ac0625226009f0aaec141317ce650bed1eb6c037bcb99",
-      "size": 1582,
+      "sha256": "69518f4cbd2f8b389e5d5f1e9127cf2144f65c17f4b0980fe260de7ce17fc996",
+      "size": 1566,
       "ownership": "kit_owned"
     },
     ".speedy/commands/hitl-template.md": {
@@ -136,28 +191,28 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/refresh-rule.md": {
-      "sha256": "1aa10b593d2417332e1182189a8c264af8aca0e26af3905c2edf38dbc87c437b",
-      "size": 1535,
+      "sha256": "11608e5e75f9c168ada2a22aba66c628f8f22d15de7243f175f802fd18ca348f",
+      "size": 1511,
       "ownership": "kit_owned"
     },
     ".speedy/commands/refresh-style.md": {
-      "sha256": "b7e862b96c32667df4328b1a3fda345cc3c70d23620e70877da39dd2a33f9b64",
-      "size": 1365,
+      "sha256": "5bcef96cf0977e35cfa210751a4a6a829160aba52aaea0dd6f5f26bbb9b34f30",
+      "size": 1340,
       "ownership": "kit_owned"
     },
     ".speedy/commands/repomap.md": {
-      "sha256": "d9b68e43e595672e3730f7f9172333aad3729478834aef18ef88c1c2408ca540",
-      "size": 1163,
+      "sha256": "3157531d60e7cd6f7736f58414e0808b131aa8754c3f1c680adb13f3c9062841",
+      "size": 1144,
       "ownership": "kit_owned"
     },
     ".speedy/commands/specs.md": {
-      "sha256": "4e66efa01524ba702765dc19f5e4415424c38aeffcd5fa79e95358b5e26d18b9",
-      "size": 2956,
+      "sha256": "5205a8f3e085a991ae722889532f85762ebc76103e6a48b7edebed3b494f0235",
+      "size": 2939,
       "ownership": "kit_owned"
     },
     ".speedy/commands/update-speedy.md": {
-      "sha256": "955743a9db94c410f0c8ab155f883ad0dd8fa1f8d9b38bb92444057d14a778f4",
-      "size": 2050,
+      "sha256": "41d6621acd246d057bb3a42d6fe6956d1ad2573a0aef55a7778f3ce04da7e1ad",
+      "size": 2780,
       "ownership": "kit_owned"
     },
     ".speedy/config/antigravity-hooks.example.json": {
@@ -171,8 +226,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/config/policy.default.json": {
-      "sha256": "778495ccd8d5e4221280f09528726f675aa824633df6766d90917abb82869ef4",
-      "size": 2302,
+      "sha256": "b8f92aa81a8c599a6bcdb6aa3777bfd04dae20bb85c8cc78fc367514b9495c51",
+      "size": 2501,
       "ownership": "kit_owned"
     },
     ".speedy/config/source.json": {
@@ -200,9 +255,49 @@
       "size": 1134104,
       "ownership": "kit_owned"
     },
+    ".speedy/docs/themes/2.tabler/1.DESIGN_SYSTEM_AND_TOKENS.md": {
+      "sha256": "58232f1a62514027abfa52ee999d1115eda04112d810e70c284c6f3f0280e63e",
+      "size": 7323,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/2.tabler/2.LAYOUT_AND_TEMPLATES.md": {
+      "sha256": "f43334879026a06e112b1ec73678b88c8d5927734e1fad64be17923ea51a8a06",
+      "size": 7545,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/2.tabler/preview-dark.png": {
+      "sha256": "58bcfee9589454372e1bb16282bc85612ec688c6cbe710632b6acb7dfaf639c1",
+      "size": 1184682,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/2.tabler/preview-light.png": {
+      "sha256": "22cd260c5821f01453ed6f99e7145cb31689ae5066c0587694c387fcbcb99692",
+      "size": 984621,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/3.midnight/1.DESIGN_SYSTEM_AND_TOKENS.md": {
+      "sha256": "3f0e9e554da525e4d1b0026a7c0292ca3bbec78900d1b0f9ab21c98acf6aa7ff",
+      "size": 7143,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/3.midnight/2.LAYOUT_AND_TEMPLATES.md": {
+      "sha256": "3babef6a7840c19319f05c9c6faebca954b77bad64c94a423427b47fd9a62b73",
+      "size": 7179,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/3.midnight/preview-dark.png": {
+      "sha256": "b039303fc3d106ea74b1910464736d244bc339ee7f52741361a44723e86d72f6",
+      "size": 1172923,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/3.midnight/preview-light.png": {
+      "sha256": "a4a5b4f53072bad9184dbb25ed612bf7b1c47f58346e01ae7f927e333911a365",
+      "size": 1034718,
+      "ownership": "kit_owned"
+    },
     ".speedy/docs/themes/README.md": {
-      "sha256": "f1ec4bfe7200b70f904c55f25e1f2e89ea24cc761a498437268513437b8fa82e",
-      "size": 1537,
+      "sha256": "52e95f4be3c0456decfda6d0249e2765af0c9f6fcf63ffe775fa56ab4fdfce1d",
+      "size": 2212,
       "ownership": "kit_owned"
     },
     ".speedy/flows/.gitkeep": {
@@ -246,8 +341,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/analyst.md": {
-      "sha256": "7badab1ecf4b8f8eb738d96619ca22cff63b4048dae57153205b029da3de1296",
-      "size": 2677,
+      "sha256": "3f156921c75237c84d2f7d01d611195762c622ee9b7420bc9b69bdb7a460bcc0",
+      "size": 2670,
       "ownership": "kit_owned"
     },
     ".speedy/roles/architect.md": {
@@ -266,8 +361,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/orchestrator.md": {
-      "sha256": "1d0b4e41a530fc04f5b9bbc14f4298999b1454f17ee3dc197d7beaf6b858a728",
-      "size": 3339,
+      "sha256": "abac75190425fd9ba07531383db91bb391581d99c9526d3ca34c7f1048d5dd47",
+      "size": 3332,
       "ownership": "kit_owned"
     },
     ".speedy/roles/reviewer.md": {
@@ -276,8 +371,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/specs.md": {
-      "sha256": "e243745021dadff34728d5050666b5c9bfcda4c113387bb0942ed65708da93b5",
-      "size": 5290,
+      "sha256": "c7dd0df5ed59c8e40ad8a0b72d80987e375bffc016e72abed03a8b51aa93626a",
+      "size": 5273,
       "ownership": "kit_owned"
     },
     ".speedy/roles/tester.md": {
@@ -286,8 +381,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/writer.md": {
-      "sha256": "bfaaf3cdc3128fd9d3846e6b9f9019334591d61dc980314c7f1ca23f0e3ab737",
-      "size": 2930,
+      "sha256": "08da4ab702f00b4a382b4a30a974a603bdcbfa99990529309c9385b043ed4012",
+      "size": 2923,
       "ownership": "kit_owned"
     },
     ".speedy/rules/1.principle.md": {
@@ -391,8 +486,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/handoff.py": {
-      "sha256": "73df3a5ea440ad131957b23a0dedefe79d64e826a4992846d161c934c1550665",
-      "size": 11943,
+      "sha256": "99ef29aea03ee6837f570a6168cba49152c3bc35641ac93f4f44501b7345ff5d",
+      "size": 12966,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/hook_guard.py": {
@@ -401,18 +496,18 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/installer_core.py": {
-      "sha256": "b1e16b0648554f3ddb440856766189118c92ce8535b7bd1d9ba94bbff4e0f065",
-      "size": 24490,
+      "sha256": "4f38446247d5c8095eb622df956e1ceea623ffedcbd4cbc13d127ddf37793e99",
+      "size": 35658,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/lifecycle.py": {
-      "sha256": "a390f9cc1832836e8b576d9fa962080871e83d5051c59276e695bfe6b6613b8d",
-      "size": 39015,
+      "sha256": "40528a7408595fc853dc89edce554801475161b4d2dc72fcdc5aaf3d9847296e",
+      "size": 41445,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/policy.py": {
-      "sha256": "55c4bd8801d3d6815cd6eedee649323abeb2feb708e50035e1a5794db9652231",
-      "size": 16934,
+      "sha256": "8212adff038ce7679b5873c88860859b2a751781bc094c57fbe676f9d37081c9",
+      "size": 17360,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/repomap.py": {
@@ -431,8 +526,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/speedy_cli.py": {
-      "sha256": "f19e5e179f67ca630e2d0f5f8fef41b0c7372476eb116368f48cffca5294c41e",
-      "size": 31911,
+      "sha256": "2890d1cf5087b5005503b19428b13d25d5f0e024daa36e26ff51ccc44c6c706c",
+      "size": 32518,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/storage.py": {
@@ -446,13 +541,13 @@
       "ownership": "kit_owned"
     },
     "AGENTS.md": {
-      "sha256": "54decea37fa221fd7ddb8c9d2cfe401af9cc85527f1076d1ce1350c2ba61c169",
-      "size": 4451,
+      "sha256": "15a92a2148dfe730ddf3e21966a2f6fddcbdbf4078c7b625b771edc70bdaade8",
+      "size": 4587,
       "ownership": "user_customizable"
     },
     "ai-workspace/.env.example": {
-      "sha256": "f957f030e96d29286452c396869ea45834a0e5150f1b6a128661d39b286288fd",
-      "size": 346,
+      "sha256": "4a3e82361060f79d28395dd348ab81fca65c0d4d71d75e521743e59ecf93a66f",
+      "size": 494,
       "ownership": "seed_once"
     },
     "ai-workspace/.gitignore": {
@@ -461,8 +556,8 @@
       "ownership": "seed_once"
     },
     "ai-workspace/README.md": {
-      "sha256": "c5a20657c6dff1b554ad377146047edecf44ac086932f54e6a1c9e0623527578",
-      "size": 1490,
+      "sha256": "1f303a679c88a3f969ca939cdd9affcd381823129b13cf536fce658d478451ad",
+      "size": 1473,
       "ownership": "seed_once"
     },
     "ai-workspace/audit/.gitkeep": {

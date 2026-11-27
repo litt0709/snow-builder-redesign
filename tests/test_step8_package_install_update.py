@@ -163,6 +163,177 @@ class TestStep8PackageInstallUpdateRollback(unittest.TestCase):
             rollback_from_backup(Path(res1["backup_dir"]), app)
             self.assertEqual((app / ".gitignore").read_text(encoding="utf-8"), "node_modules/\n.env\n")
 
+    def test_auto_gitignore_creates_when_missing_and_removes_on_rollback(self) -> None:
+        """Nếu dự án đích chưa có .gitignore, tự tạo mới đủ 4 mục và xóa sạch khi rollback."""
+        with tempfile.TemporaryDirectory() as tmp:
+            pkg = Path(tmp) / "pkg"
+            export_clean_package(SRC_ROOT, pkg)
+            app = Path(tmp) / "fresh_app"
+            app.mkdir()
+            self.assertFalse((app / ".gitignore").exists())
+
+            res = apply_install_or_update(
+                pkg,
+                app,
+                dry_run=False,
+                source_meta={"source_url": str(pkg), "source_kind": "local"},
+            )
+            self.assertEqual(res["gitignore"]["action"], "created")
+            gi_text = (app / ".gitignore").read_text(encoding="utf-8")
+            for entry in ("/.agents/", "/.speedy/", "/ai-workspace/", "/AGENTS.md"):
+                self.assertIn(entry, gi_text)
+            self.assertTrue((app / ".speedy" / "config" / "source.local.json").is_file())
+
+            rollback_from_backup(Path(res["backup_dir"]), app)
+            self.assertFalse((app / ".gitignore").exists())
+            self.assertFalse((app / ".speedy" / "config" / "source.local.json").exists())
+
+    def test_remote_install_sh_branch_fallback_and_zero_config_update(self) -> None:
+        """Kiểm chứng E2E scripts/install.sh (1 lệnh) + tạo .gitignore + zero-config /update-speedy (branch fallback -> tag)."""
+        import shutil
+
+        with tempfile.TemporaryDirectory() as tmp:
+            bare_repo = Path(tmp) / "remote.git"
+            work_repo = Path(tmp) / "work_repo"
+            target_app = Path(tmp) / "my user app"
+            target_app.mkdir(parents=True)
+
+            # Chuẩn bị bản sao repo Builder tối giản (scripts/install.py + src/) trên nhánh main (chưa có tag)
+            (work_repo / "scripts").mkdir(parents=True)
+            shutil.copy2(WORKSPACE_ROOT / "scripts" / "install.py", work_repo / "scripts" / "install.py")
+            export_clean_package(SRC_ROOT, work_repo / "src")
+
+            env = {
+                **os.environ,
+                "PYTHONDONTWRITEBYTECODE": "1",
+                "GIT_AUTHOR_NAME": "Test",
+                "GIT_AUTHOR_EMAIL": "test@example.com",
+                "GIT_COMMITTER_NAME": "Test",
+                "GIT_COMMITTER_EMAIL": "test@example.com",
+            }
+            subprocess.run(["git", "init", "--bare", "-b", "main", str(bare_repo)], check=True, capture_output=True)
+            subprocess.run(["git", "init", "-b", "main", str(work_repo)], check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(work_repo), "add", "."], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "commit", "-m", "init main"], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "push", str(bare_repo), "main"], check=True, capture_output=True, env=env)
+
+            # 1. Cài 1 lệnh bằng scripts/install.sh (kể cả khi đường dẫn target có khoảng trắng)
+            inst_proc = subprocess.run(
+                [
+                    "bash",
+                    str(WORKSPACE_ROOT / "scripts" / "install.sh"),
+                    "--target",
+                    str(target_app),
+                    "--source",
+                    str(bare_repo),
+                ],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=60,
+            )
+            self.assertEqual(inst_proc.returncode, 0, inst_proc.stderr)
+            self.assertIn("/update-speedy", inst_proc.stdout)
+            self.assertTrue((target_app / ".gitignore").is_file())
+            self.assertTrue((target_app / ".agents" / "skills" / "update-speedy" / "SKILL.md").is_file())
+            local_cfg_path = target_app / ".speedy" / "config" / "source.local.json"
+            self.assertTrue(local_cfg_path.is_file())
+            local_cfg = json.loads(local_cfg_path.read_text(encoding="utf-8"))
+            self.assertEqual(local_cfg["source_url"], str(bare_repo))
+            self.assertEqual(local_cfg["source_kind"], "branch")
+            self.assertEqual(local_cfg["source_ref"], "main")
+
+            # Tạo dữ liệu runtime người dùng để xác minh luôn được bảo toàn
+            rt_note = target_app / "ai-workspace" / "plans" / "my-feature.md"
+            rt_note.write_text("# My Feature Plan\n", encoding="utf-8")
+
+            # 2. Chạy `speedy_cli.py update` KHÔNG truyền --source -> trả UP_TO_DATE
+            cli = target_app / ".speedy" / "scripts" / "speedy_cli.py"
+            up0 = subprocess.run(
+                [sys.executable, "-B", str(cli), "--workspace", str(target_app), "update"],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=30,
+            )
+            self.assertEqual(up0.returncode, 0, up0.stderr)
+            self.assertEqual(json.loads(up0.stdout)["status"], "UP_TO_DATE")
+
+            # 3. Xóa 1 file kit-owned -> chạy update KHÔNG còn báo UP_TO_DATE mà đề xuất khôi phục
+            missing_cmd = target_app / ".speedy" / "commands" / "update-speedy.md"
+            missing_cmd.unlink()
+            up_heal = subprocess.run(
+                [sys.executable, "-B", str(cli), "--workspace", str(target_app), "update"],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=30,
+            )
+            self.assertEqual(up_heal.returncode, 0, up_heal.stderr)
+            heal_data = json.loads(up_heal.stdout)
+            self.assertIn(".speedy/commands/update-speedy.md", heal_data["plan"]["to_create"])
+
+            # 4. Đẩy commit mới lên main -> chạy update --apply --skip-conflicts KHÔNG cần --source
+            (work_repo / "src" / ".speedy" / "commands" / "branch-feature.md").write_text("# Branch Feature\n", encoding="utf-8")
+            write_manifest_in_place(work_repo / "src")
+            subprocess.run(["git", "-C", str(work_repo), "add", "."], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "commit", "-m", "add branch feature"], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "push", str(bare_repo), "main"], check=True, capture_output=True, env=env)
+
+            up1 = subprocess.run(
+                [sys.executable, "-B", str(cli), "--workspace", str(target_app), "update", "--apply", "--skip-conflicts"],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=60,
+            )
+            self.assertEqual(up1.returncode, 0, up1.stderr)
+            self.assertTrue(json.loads(up1.stdout)["applied"])
+            self.assertTrue((target_app / ".speedy" / "commands" / "branch-feature.md").is_file())
+            self.assertTrue(missing_cmd.is_file())
+            self.assertTrue(rt_note.is_file())
+
+            # 5. Gắn tag phát hành speedy-v2.0.0 ở commit mới hơn -> chuyển mượt từ branch sang tag!
+            (work_repo / "src" / ".speedy" / "commands" / "tag-release.md").write_text("# Tag Release\n", encoding="utf-8")
+            write_manifest_in_place(work_repo / "src")
+            subprocess.run(["git", "-C", str(work_repo), "add", "."], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "commit", "-m", "release v2.0.0"], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "tag", "-a", "speedy-v2.0.0", "-m", "v2.0.0"], check=True, capture_output=True, env=env)
+            subprocess.run(["git", "-C", str(work_repo), "push", str(bare_repo), "main", "speedy-v2.0.0"], check=True, capture_output=True, env=env)
+
+            up2 = subprocess.run(
+                [sys.executable, "-B", str(cli), "--workspace", str(target_app), "update", "--apply", "--skip-conflicts"],
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=60,
+            )
+            self.assertEqual(up2.returncode, 0, up2.stderr)
+            self.assertTrue(json.loads(up2.stdout)["applied"])
+            self.assertTrue((target_app / ".speedy" / "commands" / "tag-release.md").is_file())
+            self.assertEqual(json.loads(local_cfg_path.read_text(encoding="utf-8"))["source_kind"], "tag")
+
+    def test_git_argument_injection_blocked(self) -> None:
+        """Chặn argument injection khi --source hoặc --ref bắt đầu bằng '-' ở cả Python lẫn install.sh."""
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp) / "app"
+            export_clean_package(SRC_ROOT, app)
+            with self.assertRaises(SpeedyError) as err1:
+                update_from_source(app, source="--upload-pack=echo", dry_run=True)
+            self.assertEqual(err1.exception.code, ErrorCode.INVALID_INPUT)
+
+            with self.assertRaises(SpeedyError) as err2:
+                update_from_source(app, source="https://example.com/repo.git", ref="--evil", dry_run=True)
+            self.assertEqual(err2.exception.code, ErrorCode.INVALID_INPUT)
+
+            sh_proc = subprocess.run(
+                ["bash", str(WORKSPACE_ROOT / "scripts" / "install.sh"), "--target", str(app), "--source", "--upload-pack=echo"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+            )
+            self.assertEqual(sh_proc.returncode, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

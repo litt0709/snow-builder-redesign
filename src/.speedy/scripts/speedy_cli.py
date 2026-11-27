@@ -43,6 +43,7 @@ from docs_viewer import render_docs_site  # noqa: E402
 from handoff import validate_handoff  # noqa: E402
 from installer_core import rollback_from_backup, update_from_source  # noqa: E402
 from lifecycle import (  # noqa: E402
+    complete_stage,
     complete_worker_uow,
     create_session,
     list_sessions,
@@ -235,7 +236,9 @@ def _handle_state(layout, args: argparse.Namespace) -> int:
                 write_paths=args.write_path or [],
             )
         )
-    raise SpeedyError(ErrorCode.INVALID_INPUT, "Subcommand của state phải là: get | transition | uow.")
+    if args.state_action == "complete":
+        return _emit_ok(complete_stage(layout, sid=args.sid, stage=args.stage))
+    raise SpeedyError(ErrorCode.INVALID_INPUT, "Subcommand của state phải là: get | transition | complete | uow.")
 
 
 def _handle_gate(layout, args: argparse.Namespace) -> int:
@@ -472,6 +475,7 @@ def _handle_update(layout, args: argparse.Namespace) -> int:
         update_from_source(
             layout.root,
             source=args.source,
+            ref=args.ref,
             dry_run=not args.apply,
             force_overwrite_conflicts=args.force_overwrite,
             allow_with_conflicts_skipped=args.skip_conflicts,
@@ -575,6 +579,9 @@ def build_parser() -> argparse.ArgumentParser:
     st_tr.add_argument("--reason")
     st_tr.add_argument("--command-name")
     st_tr.add_argument("--new-hypothesis", action="store_true")
+    st_cmp = st_sub.add_parser("complete", help="Hoàn tất nhanh 1 stage (tự running -> validate -> approved nếu auto-pass hoặc awaiting_approval nếu cần HITL)")
+    st_cmp.add_argument("--sid", required=True)
+    st_cmp.add_argument("--stage", required=True)
     st_uow = st_sub.add_parser("uow", help="Đăng ký hoặc hoàn tất UoW có kiểm tra xung đột vùng ghi")
     st_uow.add_argument("--sid", required=True)
     st_uow.add_argument("--uow-id", required=True)
@@ -654,7 +661,7 @@ def build_parser() -> argparse.ArgumentParser:
     a_st.add_argument("--slug")
     a_st.add_argument("--goal")
     a_st.add_argument("--mode", default="feature")
-    a_st.add_argument("--policy", default="strict")
+    a_st.add_argument("--policy", default="balanced")
     a_st.add_argument("--command-ref")
     a_st.add_argument("--prompt-ref")
 
@@ -714,6 +721,7 @@ def build_parser() -> argparse.ArgumentParser:
     # 15. update
     p_up = sub.add_parser("update", help="Cập nhật hoặc rollback Speedy an toàn qua Ownership Manifest")
     p_up.add_argument("--source", help="Đường dẫn gói cục bộ hoặc URL Git repository")
+    p_up.add_argument("--ref", help="Tag hoặc nhánh Git cụ thể (mặc định ưu tiên tag speedy-v* mới nhất, fallback nhánh mặc định)")
     p_up.add_argument("--apply", action="store_true", help="Áp dụng cập nhật thật (mặc định là dry-run)")
     p_up.add_argument("--skip-conflicts", action="store_true", help="Giữ nguyên các file dự án đang xung đột")
     p_up.add_argument("--force-overwrite", action="store_true", help="Ghi đè cả file đã tùy chỉnh (vẫn có backup)")

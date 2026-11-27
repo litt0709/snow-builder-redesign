@@ -24,8 +24,10 @@ from storage import atomic_write_bytes, atomic_write_json, file_sha256, read_jso
 
 SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$")
 
-EXCLUDE_PACKAGE_NAMES = {"__pycache__", ".DS_Store", ".pytest_cache", "manifest.json"}
+EXCLUDE_PACKAGE_NAMES = {"__pycache__", ".DS_Store", ".pytest_cache", "manifest.json", "source.local.json"}
 SENSITIVE_FILENAMES = {".env", "id_rsa", "credentials.json"}
+
+LOCAL_SOURCE_CONFIG_REL = ".speedy/config/source.local.json"
 
 SPEEDY_GITIGNORE_BEGIN = "# >>> Speedy DevKit (local) >>>"
 SPEEDY_GITIGNORE_END = "# <<< Speedy DevKit (local) <<<"
@@ -35,6 +37,50 @@ SPEEDY_GITIGNORE_ENTRIES = (
     "/ai-workspace/",
     "/AGENTS.md",
 )
+
+
+def read_local_source_config(target_root: Path) -> Dict[str, Any]:
+    """Đọc cấu hình nguồn cập nhật local (.speedy/config/source.local.json) nếu tồn tại."""
+    path = target_root.resolve() / LOCAL_SOURCE_CONFIG_REL
+    if not path.is_file():
+        return {}
+    try:
+        data = read_json_safe(path)
+        return data if isinstance(data, dict) else {}
+    except SpeedyError:
+        return {}
+
+
+def write_local_source_config(
+    target_root: Path,
+    source_meta: Dict[str, Any],
+    *,
+    installed_version: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Ghi nhớ nguồn cài đặt/cập nhật vào file local ngoài manifest để /update-speedy chạy không cần --source."""
+    source_url = str(source_meta.get("source_url") or "").strip()
+    if not source_url:
+        return {"action": "skipped", "path": LOCAL_SOURCE_CONFIG_REL}
+    path = target_root.resolve() / LOCAL_SOURCE_CONFIG_REL
+    existed = path.is_file()
+    payload: Dict[str, Any] = {
+        "schema_version": 1,
+        "source_url": source_url,
+        "source_ref": str(source_meta.get("source_ref") or "").strip() or None,
+        "source_kind": str(source_meta.get("source_kind") or "git").strip(),
+        "installed_commit": str(source_meta.get("installed_commit") or "").strip() or None,
+        "installed_version": installed_version,
+        "updated_at": utc_now_iso(),
+    }
+    atomic_write_json(path, payload)
+    return {
+        "action": "updated" if existed else "created",
+        "path": LOCAL_SOURCE_CONFIG_REL,
+        "source_url": source_url,
+        "source_ref": payload["source_ref"],
+        "source_kind": payload["source_kind"],
+        "installed_commit": payload["installed_commit"],
+    }
 
 
 def ensure_speedy_gitignore(target_root: Path) -> Dict[str, Any]:
@@ -312,6 +358,7 @@ def apply_install_or_update(
     force_overwrite_conflicts: bool = False,
     allow_with_conflicts_skipped: bool = False,
     update_gitignore: bool = True,
+    source_meta: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Thực thi cài đặt hoặc cập nhật Speedy vào `target_root`:
@@ -340,13 +387,17 @@ def apply_install_or_update(
     backup_files_dir = backup_dir / "files"
     backup_files_dir.mkdir(parents=True, exist_ok=True)
 
-    # Sao lưu các file sẽ bị sửa/xóa + manifest cũ + .gitignore cũ trước khi chạm vào đĩa
+    # Sao lưu các file sẽ bị sửa/xóa + manifest cũ + .gitignore cũ + source.local.json cũ trước khi chạm vào đĩa
     overwritten_or_removed = list(plan["to_update"]) + list(plan["obsolete_to_remove"])
     if (target / ".speedy" / "manifest.json").is_file():
         overwritten_or_removed.append(".speedy/manifest.json")
     had_prev_gitignore = (target / ".gitignore").is_file()
     if update_gitignore and had_prev_gitignore:
         overwritten_or_removed.append(".gitignore")
+    will_write_local_source = bool(source_meta and str(source_meta.get("source_url") or "").strip())
+    had_prev_local_source = (target / LOCAL_SOURCE_CONFIG_REL).is_file()
+    if will_write_local_source and had_prev_local_source:
+        overwritten_or_removed.append(LOCAL_SOURCE_CONFIG_REL)
 
     for rel in overwritten_or_removed:
         orig = target / rel
@@ -365,10 +416,13 @@ def apply_install_or_update(
         "had_previous_manifest": (target / ".speedy" / "manifest.json").is_file(),
         "had_previous_gitignore": had_prev_gitignore,
         "gitignore_updated": bool(update_gitignore),
+        "had_previous_local_source": had_prev_local_source,
+        "local_source_updated": will_write_local_source,
     }
     atomic_write_json(backup_dir / "backup-manifest.json", backup_meta)
 
     gitignore_res: Optional[Dict[str, Any]] = None
+    source_cfg_res: Optional[Dict[str, Any]] = None
     try:
         for rel in plan["to_create"] + plan["to_update"]:
             src_f = pkg / rel
@@ -401,6 +455,12 @@ def apply_install_or_update(
 
         if update_gitignore:
             gitignore_res = ensure_speedy_gitignore(target)
+        if will_write_local_source and source_meta is not None:
+            source_cfg_res = write_local_source_config(
+                target,
+                source_meta,
+                installed_version=plan["incoming_version"],
+            )
     except Exception as exc:
         rollback_from_backup(backup_dir, target)
         raise SpeedyError(
@@ -417,6 +477,7 @@ def apply_install_or_update(
         "removed_obsolete_count": len(plan["obsolete_to_remove"]),
         "skipped_conflicts_count": len(plan["conflicts"]),
         "gitignore": gitignore_res,
+        "source_config": source_cfg_res,
         "plan": plan,
     }
 
@@ -451,6 +512,12 @@ def rollback_from_backup(backup_dir: Path, target_root: Optional[Path] = None) -
         (target / ".speedy" / "manifest.json").unlink()
     if meta.get("gitignore_updated") and not meta.get("had_previous_gitignore") and (target / ".gitignore").is_file():
         (target / ".gitignore").unlink()
+    if (
+        meta.get("local_source_updated")
+        and not meta.get("had_previous_local_source")
+        and (target / LOCAL_SOURCE_CONFIG_REL).is_file()
+    ):
+        (target / LOCAL_SOURCE_CONFIG_REL).unlink()
 
     return {
         "rolled_back": True,
@@ -460,21 +527,220 @@ def rollback_from_backup(backup_dir: Path, target_root: Optional[Path] = None) -
     }
 
 
+def _validate_git_arg(value: str, label: str) -> str:
+    """Chặn argument injection khi truyền URL hoặc ref vào lệnh git."""
+    clean = (value or "").strip()
+    if not clean or clean.startswith("-"):
+        raise SpeedyError(
+            ErrorCode.INVALID_INPUT,
+            f"Giá trị {label} không hợp lệ (không được rỗng hoặc bắt đầu bằng '-'): '{value}'.",
+        )
+    return clean
+
+
+def _all_kit_owned_files_present(target_root: Path) -> bool:
+    """Kiểm tra nhanh toàn bộ file kit_owned trong manifest hiện tại còn tồn tại trên đĩa."""
+    mpath = target_root / ".speedy" / "manifest.json"
+    if not mpath.is_file():
+        return False
+    try:
+        manifest = read_json_safe(mpath)
+    except SpeedyError:
+        return False
+    files_map = manifest.get("files")
+    if not isinstance(files_map, dict) or not files_map:
+        return False
+    for rel, meta in files_map.items():
+        if meta.get("ownership") == "kit_owned" and not (target_root / rel).is_file():
+            return False
+    return True
+
+
+def _resolve_git_remote_target(
+    resolved_src: str,
+    tag_prefix: str,
+    *,
+    requested_ref: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Xác định ref Git cần tải về:
+    - Nếu có `requested_ref`: dùng đúng ref đó (ưu tiên peeled commit SHA cho annotated tag).
+    - Mặc định: ưu tiên tag SemVer `speedy-vX.Y.Z` cao nhất; nếu repo chưa có tag thì fallback sang nhánh mặc định (`HEAD`).
+    """
+    safe_src = _validate_git_arg(resolved_src, "URL nguồn Git")
+    if requested_ref:
+        req = _validate_git_arg(requested_ref, "--ref")
+        try:
+            proc = subprocess.run(
+                [
+                    "git",
+                    "ls-remote",
+                    "--",
+                    safe_src,
+                    f"refs/tags/{req}",
+                    f"refs/tags/{req}^{{}}",
+                    f"refs/heads/{req}",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=20,
+            )
+        except Exception as exc:
+            raise SpeedyError(ErrorCode.NOT_FOUND, f"Không thể truy vấn Git remote '{safe_src}': {exc}") from exc
+        if proc.returncode != 0:
+            raise SpeedyError(
+                ErrorCode.NOT_FOUND,
+                f"Không thể truy vấn ref '{req}' từ '{safe_src}': {proc.stderr.strip()}",
+            )
+        tag_commit: Optional[str] = None
+        tag_peeled_commit: Optional[str] = None
+        branch_commit: Optional[str] = None
+        for line in proc.stdout.splitlines():
+            parts = line.split("\t")
+            if len(parts) < 2:
+                continue
+            sha, ref_name = parts[0].strip(), parts[1].strip()
+            if ref_name == f"refs/tags/{req}^{{}}":
+                tag_peeled_commit = sha
+            elif ref_name == f"refs/tags/{req}":
+                tag_commit = sha
+            elif ref_name == f"refs/heads/{req}":
+                branch_commit = sha
+
+        if tag_peeled_commit or tag_commit:
+            source_kind = "tag"
+            remote_commit = tag_peeled_commit or tag_commit
+        elif branch_commit:
+            source_kind = "branch"
+            remote_commit = branch_commit
+        else:
+            raise SpeedyError(
+                ErrorCode.NOT_FOUND,
+                f"Không tìm thấy tag hoặc nhánh '{req}' trên '{safe_src}'.",
+            )
+        ver_tuple: Optional[Tuple[int, int, int, str]] = None
+        if source_kind == "tag" and req.startswith(tag_prefix):
+            try:
+                ver_tuple = parse_semver(req[len(tag_prefix) :])
+            except SpeedyError:
+                ver_tuple = None
+        return {
+            "source_kind": source_kind,
+            "ref": req,
+            "remote_commit": remote_commit,
+            "version_tuple": ver_tuple,
+        }
+
+    try:
+        ls_proc = subprocess.run(
+            ["git", "ls-remote", "--tags", "--", safe_src, f"refs/tags/{tag_prefix}*"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    except Exception as exc:
+        raise SpeedyError(ErrorCode.NOT_FOUND, f"Không thể truy vấn Git remote '{safe_src}': {exc}") from exc
+
+    if ls_proc.returncode != 0:
+        raise SpeedyError(
+            ErrorCode.NOT_FOUND,
+            f"Không thể đọc danh sách tag từ '{safe_src}': {ls_proc.stderr.strip()}",
+        )
+
+    tag_commits: Dict[str, str] = {}
+    tag_versions: Dict[str, Tuple[int, int, int, str]] = {}
+    for line in ls_proc.stdout.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 2:
+            continue
+        sha = parts[0].strip()
+        ref_name = parts[1].strip()
+        is_peeled = ref_name.endswith("^{}")
+        if is_peeled:
+            ref_name = ref_name[:-3]
+        tag_name = ref_name.replace("refs/tags/", "", 1)
+        if not tag_name.startswith(tag_prefix):
+            continue
+        ver_part = tag_name[len(tag_prefix) :]
+        try:
+            ver_tuple = parse_semver(ver_part)
+        except SpeedyError:
+            continue
+        tag_versions[tag_name] = ver_tuple
+        if is_peeled or tag_name not in tag_commits:
+            tag_commits[tag_name] = sha
+
+    if tag_versions:
+        latest_tag = max(tag_versions, key=lambda name: tag_versions[name])
+        return {
+            "source_kind": "tag",
+            "ref": latest_tag,
+            "remote_commit": tag_commits[latest_tag],
+            "version_tuple": tag_versions[latest_tag],
+        }
+
+    # Fallback: repo chưa gắn tag speedy-v* -> lấy nhánh mặc định qua HEAD symref
+    try:
+        head_proc = subprocess.run(
+            ["git", "ls-remote", "--symref", "--", safe_src, "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+    except Exception as exc:
+        raise SpeedyError(ErrorCode.NOT_FOUND, f"Không thể truy vấn HEAD của '{safe_src}': {exc}") from exc
+
+    if head_proc.returncode != 0:
+        raise SpeedyError(
+            ErrorCode.NOT_FOUND,
+            f"Không thể đọc nhánh mặc định từ '{safe_src}': {head_proc.stderr.strip()}",
+        )
+
+    default_branch = "main"
+    head_commit: Optional[str] = None
+    for line in head_proc.stdout.splitlines():
+        if line.startswith("ref:"):
+            parts = line.split()
+            if len(parts) >= 2 and parts[1].startswith("refs/heads/"):
+                default_branch = parts[1].replace("refs/heads/", "", 1)
+        else:
+            parts = line.split("\t")
+            if len(parts) >= 2 and parts[1].strip() == "HEAD":
+                head_commit = parts[0].strip()
+
+    if not head_commit:
+        raise SpeedyError(
+            ErrorCode.NOT_FOUND,
+            f"Repository nguồn '{safe_src}' chưa có tag '{tag_prefix}X.Y.Z' và không đọc được commit HEAD.",
+        )
+
+    return {
+        "source_kind": "branch",
+        "ref": _validate_git_arg(default_branch, "nhánh mặc định"),
+        "remote_commit": head_commit,
+        "version_tuple": None,
+    }
+
+
 def update_from_source(
     target_root: Path,
     *,
     source: Optional[str] = None,
+    ref: Optional[str] = None,
     dry_run: bool = True,
     force_overwrite_conflicts: bool = False,
     allow_with_conflicts_skipped: bool = False,
 ) -> Dict[str, Any]:
     """
-    Cập nhật Speedy trong dự án ứng dụng từ đường dẫn gói cục bộ hoặc Git repository có tag `speedy-vX.Y.Z`.
-    Không bao giờ tự động dùng `git remote origin` của ứng dụng.
+    Cập nhật Speedy trong dự án ứng dụng từ đường dẫn gói cục bộ hoặc Git repository.
+    - Ưu tiên tag `speedy-vX.Y.Z` cao nhất; nếu repo chưa có tag thì fallback sang nhánh mặc định (`main`).
+    - Tự động đọc nguồn đã lưu tại `.speedy/config/source.local.json`.
+    - Không bao giờ tự động dùng `git remote origin` của ứng dụng.
     """
     target = target_root.resolve()
     cfg_path = target / ".speedy" / "config" / "source.json"
     cfg = read_json_safe(cfg_path) if cfg_path.is_file() else {}
+    local_cfg = read_local_source_config(target)
     env_file_src = ""
     env_file = target / "ai-workspace" / ".env"
     if env_file.is_file():
@@ -489,13 +755,14 @@ def update_from_source(
         source
         or os.environ.get("SPEEDY_SOURCE_URL", "").strip()
         or env_file_src
+        or str(local_cfg.get("source_url") or "").strip()
         or str(cfg.get("source_url") or "").strip()
     )
     if not resolved_src:
         raise SpeedyError(
             ErrorCode.NOT_FOUND,
             "Chưa cấu hình nguồn cập nhật Speedy (source_url đang trống).",
-            remediation="Truyền '--source <path_hoặc_git_url>', đặt biến môi trường SPEEDY_SOURCE_URL, hoặc cập nhật .speedy/config/source.json.",
+            remediation="Truyền '--source <path_hoặc_git_url>', đặt biến môi trường SPEEDY_SOURCE_URL, hoặc cập nhật .speedy/config/source.local.json.",
         )
 
     local_cand = Path(resolved_src).expanduser()
@@ -507,65 +774,53 @@ def update_from_source(
             dry_run=dry_run,
             force_overwrite_conflicts=force_overwrite_conflicts,
             allow_with_conflicts_skipped=allow_with_conflicts_skipped,
+            source_meta={"source_url": str(local_cand.resolve()), "source_kind": "local"},
         )
 
-    # Nếu là Git URL: tìm tag speedy-v* mới nhất theo semver và clone vào vùng staging tạm
     tag_prefix = str(cfg.get("tag_prefix") or "speedy-v")
-    try:
-        ls_proc = subprocess.run(
-            ["git", "ls-remote", "--tags", resolved_src, f"refs/tags/{tag_prefix}*"],
-            capture_output=True,
-            text=True,
-            timeout=20,
-        )
-    except Exception as exc:
-        raise SpeedyError(ErrorCode.NOT_FOUND, f"Không thể truy vấn Git remote '{resolved_src}': {exc}") from exc
+    remote_target = _resolve_git_remote_target(resolved_src, tag_prefix, requested_ref=ref)
+    source_kind = remote_target["source_kind"]
+    selected_ref = remote_target["ref"]
+    remote_commit = remote_target["remote_commit"]
+    latest_ver_tuple = remote_target["version_tuple"]
 
-    if ls_proc.returncode != 0:
-        raise SpeedyError(
-            ErrorCode.NOT_FOUND,
-            f"Không thể đọc danh sách tag từ '{resolved_src}': {ls_proc.stderr.strip()}",
-        )
-
-    tags: List[Tuple[Tuple[int, int, int, str], str]] = []
-    for line in ls_proc.stdout.splitlines():
-        parts = line.split("\t")
-        if len(parts) < 2:
-            continue
-        ref = parts[1].strip()
-        if ref.endswith("^{}"):
-            ref = ref[:-3]
-        tag_name = ref.replace("refs/tags/", "")
-        if not tag_name.startswith(tag_prefix):
-            continue
-        ver_part = tag_name[len(tag_prefix) :]
-        try:
-            tags.append((parse_semver(ver_part), tag_name))
-        except SpeedyError:
-            continue
-
-    if not tags:
-        raise SpeedyError(
-            ErrorCode.NOT_FOUND,
-            f"Repository nguồn '{resolved_src}' chưa có tag phát hành dạng '{tag_prefix}X.Y.Z'.",
-        )
-
-    tags.sort(key=lambda item: item[0])
-    latest_ver_tuple, latest_tag = tags[-1]
     current_ver_file = target / ".speedy" / "VERSION"
-    if current_ver_file.is_file():
-        cur_ver_str = current_ver_file.read_text(encoding="utf-8").strip()
-        if parse_semver(cur_ver_str) >= latest_ver_tuple:
+    cur_ver_str = current_ver_file.read_text(encoding="utf-8").strip() if current_ver_file.is_file() else ""
+    prev_commit = str(local_cfg.get("installed_commit") or "").strip()
+    prev_kind = str(local_cfg.get("source_kind") or "").strip()
+    prev_ref = str(local_cfg.get("source_ref") or "").strip()
+    kit_intact = _all_kit_owned_files_present(target)
+
+    if source_kind == "tag" and latest_ver_tuple is not None and cur_ver_str and not ref and kit_intact:
+        cur_tuple = parse_semver(cur_ver_str)
+        same_or_newer_tag = cur_tuple > latest_ver_tuple or (
+            cur_tuple == latest_ver_tuple and (prev_kind != "branch" or (prev_commit and prev_commit == remote_commit))
+        )
+        if same_or_newer_tag:
             return {
                 "applied": False,
                 "status": "UP_TO_DATE",
+                "source_kind": "tag",
                 "current_version": cur_ver_str,
-                "latest_tag": latest_tag,
+                "latest_tag": selected_ref,
+            }
+    elif source_kind == "branch" and kit_intact:
+        same_ref = (not ref) or (prev_ref == selected_ref)
+        if same_ref and prev_commit and remote_commit and prev_commit == remote_commit:
+            return {
+                "applied": False,
+                "status": "UP_TO_DATE",
+                "source_kind": "branch",
+                "branch": selected_ref,
+                "current_version": cur_ver_str,
+                "current_commit": prev_commit,
             }
 
+    safe_src = _validate_git_arg(resolved_src, "URL nguồn Git")
+    safe_ref = _validate_git_arg(selected_ref, "ref Git")
     with tempfile.TemporaryDirectory(prefix="speedy-staging-") as staging_tmp:
         clone_proc = subprocess.run(
-            ["git", "clone", "--depth=1", "--branch", latest_tag, resolved_src, staging_tmp],
+            ["git", "clone", "--depth=1", "--branch", safe_ref, "--", safe_src, staging_tmp],
             capture_output=True,
             text=True,
             timeout=60,
@@ -573,14 +828,34 @@ def update_from_source(
         if clone_proc.returncode != 0:
             raise SpeedyError(
                 ErrorCode.NOT_FOUND,
-                f"Tải tag '{latest_tag}' về vùng staging thất bại: {clone_proc.stderr.strip()}",
+                f"Tải ref '{selected_ref}' về vùng staging thất bại: {clone_proc.stderr.strip()}",
             )
+        rev_proc = subprocess.run(
+            ["git", "-C", staging_tmp, "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        commit_sha = rev_proc.stdout.strip() if rev_proc.returncode == 0 else (remote_commit or "")
         subpath = str(cfg.get("package_subpath") or "src")
         staged_pkg = (Path(staging_tmp) / subpath) if (Path(staging_tmp) / subpath / ".speedy").is_dir() else Path(staging_tmp)
-        return apply_install_or_update(
+        res = apply_install_or_update(
             staged_pkg,
             target,
             dry_run=dry_run,
             force_overwrite_conflicts=force_overwrite_conflicts,
             allow_with_conflicts_skipped=allow_with_conflicts_skipped,
+            source_meta={
+                "source_url": resolved_src,
+                "source_ref": selected_ref,
+                "source_kind": source_kind,
+                "installed_commit": commit_sha,
+            },
         )
+        res["resolved_source"] = {
+            "source_url": resolved_src,
+            "source_ref": selected_ref,
+            "source_kind": source_kind,
+            "commit": commit_sha,
+        }
+        return res

@@ -3,7 +3,7 @@
 - **Model khuyến nghị**: `Gemini Neon` *(Tầng 2 — Mặc định chủ lực cho phân tích yêu cầu, phân rã bước và đánh giá trade-off/pitfall)*
 
 ## 1. Khi nào dùng
-Kích hoạt khi chủ dự án (Owner) gọi `/specs` (`speedy-specs`) để chuyển ý tưởng, yêu cầu nghiệp vụ hoặc phản hồi điều chỉnh thành tài liệu đặc tả thiết kế chuẩn hóa tại `ai-workspace/specs/<slug>.md`, giúp cả con người lẫn LLM ở các phiên triển khai sau (`/flow`, `/analyst`) hiểu đúng, nhanh và chính xác. Hỗ trợ chạy **nhiều lần** để tiến hóa tài liệu spec theo từng vòng góp ý.
+Kích hoạt khi chủ dự án (Owner) gọi `/specs` để chuyển ý tưởng, yêu cầu nghiệp vụ hoặc phản hồi điều chỉnh thành tài liệu đặc tả thiết kế chuẩn hóa tại `ai-workspace/specs/<slug>.md`, giúp cả con người lẫn LLM ở các phiên triển khai sau (`/flow`, `/analyst`) hiểu đúng, nhanh và chính xác. Hỗ trợ chạy **nhiều lần** để tiến hóa tài liệu spec theo từng vòng góp ý.
 
 ## 2. Input phải đọc
 - Yêu cầu mới hoặc yêu cầu điều chỉnh từ người dùng (kèm tên file spec mục tiêu nếu có).

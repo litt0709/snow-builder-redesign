@@ -72,7 +72,7 @@ COMPLEX_ARCHITECTURE_SIGNALS = {
 SAFE_SIMPLE_EXTENSIONS = {".md", ".txt", ".json", ".properties", ".toml", ".yaml", ".yml"}
 
 DEFAULT_POLICY_CONFIG: Dict[str, object] = {
-    "default_profile": "strict",
+    "default_profile": "balanced",
     "model_routing": {
         "light_model": "Gemini Hydrogen",
         "standard_model": "Gemini Neon",
@@ -96,8 +96,25 @@ DEFAULT_POLICY_CONFIG: Dict[str, object] = {
         },
         "balanced": {
             "gate_policy": "balanced",
-            "auto_pass_stages": ["bootstrap", "implementer", "docs"],
-            "mandatory_human_stages": ["analyst", "architect", "reviewer", "tester", "verify_report"],
+            "auto_pass_stages": [
+                "bootstrap",
+                "analyst",
+                "architect",
+                "implementer",
+                "reviewer",
+                "tester",
+                "docs",
+                "verify_report",
+                "wrapup",
+            ],
+            "hitl_triggers": [
+                "high_risk",
+                "open_questions",
+                "reviewer_request_changes",
+                "verification_failed",
+                "file_conflicts",
+                "release_or_push",
+            ],
             "max_uow_attempts": 3,
             "max_parallel_workers": 2,
             "stage_deadline_seconds": 600,
@@ -284,7 +301,7 @@ def classify_intent(
 
 
 def resolve_execution_budget(
-    profile_name: str = GatePolicy.STRICT.value,
+    profile_name: str = GatePolicy.BALANCED.value,
     policy_config: Optional[Dict[str, object]] = None,
 ) -> Dict[str, object]:
     """Chốt ngân sách hữu hạn trước khi chạy stage; ghi rõ giới hạn nào host không tự đo được."""
@@ -294,7 +311,7 @@ def resolve_execution_budget(
         raise SpeedyError(
             ErrorCode.INVALID_INPUT,
             f"Profile chính sách không hợp lệ: '{profile_name}'",
-            remediation="Dùng 'strict' (mặc định) hoặc 'balanced'.",
+            remediation="Dùng 'balanced' (mặc định) hoặc 'strict'.",
         )
 
     raw = dict(profiles[profile_name])
@@ -333,16 +350,22 @@ def resolve_execution_budget(
     }
 
 
-def stage_requires_human_gate(stage: str, gate_policy: str, high_risk: bool = False) -> bool:
-    """Xác định một stage có bắt buộc dừng chờ người dùng phê duyệt hay không."""
+def stage_requires_human_gate(
+    stage: str,
+    gate_policy: str,
+    high_risk: bool = False,
+    has_open_questions: bool = False,
+) -> bool:
+    """
+    Xác định một stage có bắt buộc dừng chờ người dùng phê duyệt (HITL) hay không:
+    - Chế độ `strict`: dừng mọi stage chuyên môn.
+    - Chế độ `balanced` (mặc định): chỉ dừng HITL khi task có `high_risk=True` hoặc handoff có `Open questions` cần người dùng chốt; các stage rủi ro thấp đạt chuẩn tự động đi tiếp.
+    """
     if stage in {"bootstrap", "wrapup", "root_cause"}:
         return False
-    if gate_policy == GatePolicy.STRICT.value or high_risk:
-        # Theo thiết kế feature-flow: implementer chuyển thẳng sang reviewer để reviewer kiểm tra trước gate,
-        # TRỪ KHI ở chế độ simple không có reviewer thì implementer phải có gate.
+    if gate_policy == GatePolicy.STRICT.value or high_risk or has_open_questions:
         return True
-    # Chế độ balanced: chỉ auto-pass implementer và docs khi không có rủi ro cao
-    return stage not in {"implementer", "docs"}
+    return False
 
 
 def compute_failure_fingerprint(error_class: str, command: str, diagnostic_summary: str) -> str:

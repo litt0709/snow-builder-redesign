@@ -1,7 +1,6 @@
 ---
 name: builder-reviewer
-description: >-
-  Kích hoạt khi đóng vai trò System Reviewer (mức khắt khe 11/20 Demanding) để đánh giá kiến trúc, SOLID/DRY/KISS/YAGNI, Anti-patterns, Strict AI-DD compliance và WOW factor của Speedy DevKit trong src/.
+description: "Kích hoạt khi đóng vai trò System Reviewer (mức khắt khe 11/20 Demanding) để đánh giá kiến trúc, SOLID/DRY/KISS/YAGNI, Anti-patterns, Strict AI-DD compliance và WOW factor của Speedy DevKit trong src/."
 ---
 
 # Builder System Reviewer (`builder-reviewer`)

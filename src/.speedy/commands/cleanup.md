@@ -1,4 +1,4 @@
-# `/cleanup` (`speedy-cleanup`) — Dọn Dẹp An Toàn Artifact Cũ
+# `/cleanup` — Dọn Dẹp An Toàn Artifact Cũ
 
 ## Mô tả
 Quét và dọn dẹp các thư mục phiên đã kết thúc (`completed` / `aborted`) quá hạn lưu trữ cùng dữ liệu tạm trong `ai-workspace/tmp/`, bảo vệ tuyệt đối phiên đang chạy.

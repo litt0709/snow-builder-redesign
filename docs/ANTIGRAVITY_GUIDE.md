@@ -40,7 +40,7 @@ Sao chép `.speedy/config/antigravity-hooks.example.json` thành `.agents/hooks.
 
 | Thứ tự ưu tiên | Model trên Antigravity | Khi nào chọn | Lý do |
 |---|---|---|---|
-| **1 — Nhẹ & Nhanh** | **Gemini Hydrogen** | Khi chạy điều phối (`speedy-flow`), viết hoặc đồng bộ tài liệu (`speedy-docs`, `docs-manager`), dọn dẹp (`speedy-cleanup`) | Tốc độ phản hồi cực nhanh, tốn rất ít quota. |
+| **1 — Nhẹ & Nhanh** | **Gemini Hydrogen** | Khi chạy điều phối (`/flow`), viết hoặc đồng bộ tài liệu (`/docs`, `docs-manager`), dọn dẹp (`/cleanup`) | Tốc độ phản hồi cực nhanh, tốn rất ít quota. |
 | **2 — Mặc định chủ lực** | **Gemini Neon** | Mặc định cho hầu hết công việc hàng ngày: phân tích (`analyst`), viết code (`implementer`), viết test (`tester`), và thiết kế/review mức độ thường | Cân bằng tốt nhất giữa độ chính xác lập trình và hạn mức sử dụng. |
 | **3 — Chuyên sâu (Hạn chế)** | **Gemini Carbon** | **Chỉ bật** cho `architect` hoặc `reviewer` độc lập khi gặp bài toán kiến trúc cực khó hoặc vùng rủi ro cao (`auth`, `payment`, `schema`, `security`) | **Rất nhanh chạm giới hạn quota** — không bật cố định cho toàn bộ phiên dài. |
 
@@ -48,7 +48,16 @@ Sao chép `.speedy/config/antigravity-hooks.example.json` thành `.agents/hooks.
 
 ## 3. Cài Đặt Speedy Vào Dự Án Ứng Dụng
 
-Từ thư mục **SNOW Builder**:
+### Cách 1: Cài đặt 1 lệnh từ Git tại bất kỳ máy nào (Khuyến nghị)
+Mở terminal ngay tại **thư mục gốc dự án ứng dụng của bạn** và chạy:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash
+```
+
+Lệnh này tự động tải bản mới nhất (tag `speedy-vX.Y.Z` cao nhất hoặc fallback nhánh `main`), cài Speedy kèm `--skip-conflicts`, tự tạo/cập nhật `.gitignore` (thêm `/.agents/`, `/.speedy/`, `/ai-workspace/`, `/AGENTS.md`) và lưu nguồn vào `.speedy/config/source.local.json` để các lần sau chỉ cần chạy `/update-speedy`.
+
+### Cách 2: Cài đặt cục bộ từ thư mục **SNOW Builder**
 
 ```bash
 # Bước 1: Xem trước kế hoạch cài đặt (Dry-run an toàn, không ghi file)
@@ -67,13 +76,18 @@ python3 scripts/package.py --out dist/speedy-v2.0.0
 
 ## 4. Sử Dụng Hàng Ngày, Resume, Cập Nhật & Phát Hành
 
-### 4.1. Các Skill / Lệnh Chính Trong Dự Án Đích
-- Gọi `/speedy-flow` (hoặc mô tả yêu cầu kèm `/flow`): Tự động phân loại `feature` / `fix` / `simple` / `verify`, khởi tạo session, nạp Context Packet gọn nhẹ và dừng xin duyệt ở từng cổng quan trọng.
-- Gọi `/speedy-specs` (hoặc `/specs`): Ghi nhận và cập nhật lặp lại tài liệu đặc tả thiết kế chuẩn 6 phần tại `ai-workspace/specs/`, dễ đọc cho cả Owner lẫn LLM ở các phiên sau.
-- Gọi `/speedy-analyst`: Lập riêng bản Implementation Brief + danh sách `AC-001..N` rồi dừng.
-- Gọi `/speedy-docs`: Quét 2 cấp lập Topic Map và viết bộ tài liệu kiến trúc vào `ai-workspace/docs/`.
-- Gọi `/speedy-docs-view` và `/speedy-audit-view`: Xuất báo cáo HTML đọc offline tại chỗ.
-- Gọi `/speedy-cleanup`: Xem dry-run và dọn dẹp các phiên cũ đã hoàn tất.
+### 4.1. Các Skill / Slash Command Chính Trong Dự Án Đích
+> *Tương thích Dual-Surface*: Mỗi lệnh đều có sẵn cả **Agent Skill** (`.agents/skills/<name>/SKILL.md` cho Antigravity App 2.0 / CLI) và **Thin Workflow** (`.agents/workflows/<name>.md` để hiện trực tiếp trong menu `/` của Antigravity IDE standalone).
+
+- Gọi `/flow`: Tự động phân loại `feature` / `fix` / `simple` / `verify`, khởi tạo session, nạp Context Packet gọn nhẹ và dừng xin duyệt ở từng cổng quan trọng.
+- Gọi `/specs`: Ghi nhận và cập nhật lặp lại tài liệu đặc tả thiết kế chuẩn 6 phần tại `ai-workspace/specs/`, dễ đọc cho cả Owner lẫn LLM ở các phiên sau.
+- Gọi `/analyst`: Lập riêng bản Implementation Brief + danh sách `AC-001..N` rồi dừng.
+- Gọi `/docs`: Quét 2 cấp lập Topic Map và viết bộ tài liệu kiến trúc vào `ai-workspace/docs/`.
+- Gọi `/docs-view` và `/audit-view`: Xuất báo cáo HTML đọc offline tại chỗ.
+- Gọi `/refresh-rule` và `/refresh-style`: Trích xuất coding convention và style guide từ mã nguồn thực tế.
+- Gọi `/repomap`: Định vị nhanh module mã nguồn trước khi đọc file.
+- Gọi `/cleanup`: Xem dry-run và dọn dẹp các phiên cũ đã hoàn tất.
+- Gọi `/update-speedy`: Kiểm tra phiên bản/commit mới và cập nhật Speedy an toàn có backup rollback.
 
 ### 4.2. Tiếp Tục Công Việc Trên Phiên Chat Mới (Resume)
 Không cần dán lại lịch sử chat cũ. Mở cuộc trò chuyện mới trên Antigravity và gửi:
@@ -81,13 +95,17 @@ Không cần dán lại lịch sử chat cũ. Mở cuộc trò chuyện mới tr
 
 CLI sẽ tự động đối chiếu semantic checksum của các bản thiết kế đã duyệt và snapshot mã nguồn hiện tại để tiếp tục đúng bước đang dở.
 
-### 4.3. Cập Nhật & Khôi Phục (Rollback)
+### 4.3. Cập Nhật (`/update-speedy`) & Khôi Phục (Rollback)
+Sau khi đã cài Speedy bằng 1 lệnh ở Mục 3, ở các lần cập nhật sau bạn chỉ cần gõ slash command `/update-speedy` trong Antigravity IDE (không cần truyền lại `--source`). Hoặc chạy trực tiếp bằng CLI:
 ```bash
-# Kiểm tra bản cập nhật mới ở chế độ dry-run
-python3 .speedy/scripts/speedy_cli.py update --source /duong/dan/hoac/git-url
+# Kiểm tra bản cập nhật mới ở chế độ dry-run (tự đọc nguồn từ .speedy/config/source.local.json)
+python3 .speedy/scripts/speedy_cli.py update
 
-# Áp dụng cập nhật (ai-workspace/ luôn được giữ nguyên 100%)
-python3 .speedy/scripts/speedy_cli.py update --source /duong/dan/hoac/git-url --apply --skip-conflicts
+# Áp dụng cập nhật (ai-workspace/ luôn được giữ nguyên 100%, tự đồng bộ .gitignore)
+python3 .speedy/scripts/speedy_cli.py update --apply --skip-conflicts
+
+# Hoặc chỉ định nguồn/ref tường minh khi cần
+python3 .speedy/scripts/speedy_cli.py update --source /duong/dan/hoac/git-url --ref main --apply --skip-conflicts
 
 # Khôi phục nguyên trạng trong 1 giây nếu cần
 python3 .speedy/scripts/speedy_cli.py update --rollback ai-workspace/tmp/backups/<ten-thu-muc-backup>

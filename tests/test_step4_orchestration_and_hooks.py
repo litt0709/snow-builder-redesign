@@ -177,6 +177,46 @@ class TestStep4OrchestrationAndHooks(unittest.TestCase):
             st = load_session_state(layout, rsid)
             self.assertTrue(st["high_risk"])
 
+            # Mặc định khi không truyền policy_profile -> là balanced + complete_stage tự auto-pass khi không có Open questions
+            from lifecycle import complete_stage
+
+            auto_sess = create_session(
+                layout,
+                slug="smart-balanced",
+                goal="Cập nhật giao diện nút lưu",
+                mode="feature",
+            )
+            self.assertEqual(auto_sess["policy"], "balanced")
+            asid = auto_sess["sid"]
+            asdir = session_dir_for(layout, asid)
+            (asdir / "handoff-1-analyst.md").write_text(_handoff_doc(asid, "analyst"), encoding="utf-8")
+            c1 = complete_stage(layout, sid=asid, stage="analyst")
+            self.assertEqual(c1["stage_status"], "approved")
+            self.assertFalse(c1["requires_human_approval"])
+
+            # Nếu handoff có mục Open questions thật sự -> balanced BẮT BUỘC dừng awaiting_approval để hỏi user
+            arch_with_q = _handoff_doc(asid, "architect").replace(
+                "## Open questions\nKhông có",
+                "## Open questions\n1. Bạn muốn lưu cài đặt vào localStorage hay cookie?",
+            )
+            (asdir / "handoff-2-architect.md").write_text(arch_with_q, encoding="utf-8")
+            c2 = complete_stage(layout, sid=asid, stage="architect")
+            self.assertEqual(c2["stage_status"], "awaiting_approval")
+            self.assertTrue(c2["requires_human_approval"])
+
+            # Reviewer trả REQUEST_CHANGES -> KHÔNG BAO GIỜ auto-pass ngay cả ở balanced
+            record_gate_decision(
+                layout, sid=asid, stage="architect", decision="approve", actor="human", interaction_ref="ask#q1"
+            )
+            (asdir / "handoff-3-implementer.md").write_text(_handoff_doc(asid, "implementer"), encoding="utf-8")
+            c3 = complete_stage(layout, sid=asid, stage="implementer")
+            self.assertEqual(c3["stage_status"], "approved")
+            rev_req = _handoff_doc(asid, "reviewer").replace("`APPROVE`", "`REQUEST_CHANGES`")
+            (asdir / "handoff-4-reviewer.md").write_text(rev_req, encoding="utf-8")
+            c4 = complete_stage(layout, sid=asid, stage="reviewer")
+            self.assertEqual(c4["stage_status"], "awaiting_approval")
+            self.assertTrue(c4["requires_human_approval"])
+
     def test_antigravity_pre_tool_use_hook_guard(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             ws_str = str(Path(tmp).resolve())

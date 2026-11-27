@@ -1,4 +1,4 @@
-# `/refresh-rule` (`speedy-refresh-rule`) — Cập Nhật Quy Ước Lập Trình Dự Án
+# `/refresh-rule` — Cập Nhật Quy Ước Lập Trình Dự Án
 
 ## Mô tả
 Quét mã nguồn và các file cấu hình linter/formatter hiện có của dự án để cập nhật quy ước lập trình thực tế vào `ai-workspace/docs/development-rules/`, giữ nguyên phần nguyên tắc nền tảng trong `principles.md`.

@@ -1,4 +1,4 @@
-# `/refresh-style` (`speedy-refresh-style`) — Cập Nhật Style Guide Dự Án
+# `/refresh-style` — Cập Nhật Style Guide Dự Án
 
 ## Mô tả
 Phân tích phong cách viết code thực tế của dự án (**① Repo Style — ưu tiên số 1**) và bổ sung tham chiếu chuẩn ngành (**② Industry Reference Style — ưu tiên số 2**) vào `ai-workspace/docs/development-style/STYLE.md`.

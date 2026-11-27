@@ -128,7 +128,7 @@ def create_session(
     profile = (
         policy_profile
         or env_policy
-        or str((policy_cfg or {}).get("default_profile") or GatePolicy.STRICT.value)
+        or str((policy_cfg or {}).get("default_profile") or GatePolicy.BALANCED.value)
     )
     budget = resolve_execution_budget(profile, policy_cfg)
 
@@ -443,20 +443,8 @@ def transition_stage(
 
         policy_mode = state.get("policy", GatePolicy.STRICT.value)
         high_risk = bool(state.get("high_risk"))
-        needs_human = stage_requires_human_gate(stage_id, policy_mode, high_risk=high_risk)
-        # Trong feature/fix, implementer đi tiếp sang reviewer để review độc lập rồi mới dừng ở gate reviewer
-        if stage_id == "implementer" and "reviewer" in route:
-            needs_human = False
-
-        if target_status == StageStatus.APPROVED.value and needs_human:
-            raise SpeedyError(
-                ErrorCode.GATE_REQUIRED,
-                f"Stage '{stage_id}' bắt buộc có phê duyệt của con người trong chế độ '{policy_mode}'.",
-                stage=stage_id,
-                remediation="Chuyển sang 'awaiting_approval', gửi link artifact cho User rồi dùng 'gate approve --actor human'.",
-            )
-
-        # Nếu hoàn tất công việc của stage có handoff -> bắt buộc validate handoff trên đĩa
+        val: Optional[Dict[str, Any]] = None
+        # Nếu hoàn tất công việc của stage có handoff -> bắt buộc validate handoff trên đĩa trước khi xét gate
         if target_status in {StageStatus.AWAITING_APPROVAL.value, StageStatus.APPROVED.value} and stage_id in STAGE_FILES:
             scope_cfg = state.get("scope", {})
             val = validate_handoff(
@@ -475,6 +463,35 @@ def transition_stage(
                     details=val,
                     remediation="Điền đầy đủ 5 headings + Resume Metadata và xóa toàn bộ placeholder [FILL].",
                 )
+
+        has_open_q = bool(val.get("has_open_questions")) if val else False
+        reviewer_req_changes = bool(val and stage_id == "reviewer" and val.get("reviewer_verdict") == "REQUEST_CHANGES")
+        needs_human = stage_requires_human_gate(
+            stage_id,
+            policy_mode,
+            high_risk=high_risk,
+            has_open_questions=has_open_q,
+        ) or reviewer_req_changes
+        # Trong feature/fix ở chế độ strict, implementer đi tiếp sang reviewer để review độc lập rồi mới dừng ở gate reviewer
+        if stage_id == "implementer" and "reviewer" in route and not has_open_q:
+            needs_human = False
+
+        if target_status == StageStatus.APPROVED.value and needs_human:
+            reason_hint = (
+                "Handoff còn mục 'Open questions' cần người dùng xác nhận"
+                if has_open_q
+                else "Reviewer trả về REQUEST_CHANGES"
+                if reviewer_req_changes
+                else f"Stage '{stage_id}' bắt buộc có phê duyệt của con người trong chế độ '{policy_mode}'"
+            )
+            raise SpeedyError(
+                ErrorCode.GATE_REQUIRED,
+                f"{reason_hint}.",
+                stage=stage_id,
+                remediation="Chuyển sang 'awaiting_approval', gửi link artifact cho User rồi dùng 'gate approve --actor human'.",
+            )
+
+        if val is not None:
             stages[stage_id]["artifact_path"] = val["file_path"]
             stages[stage_id]["artifact_checksum"] = val["semantic_checksum"]
             stages[stage_id]["revision"] = val["revision"]
@@ -485,6 +502,7 @@ def transition_stage(
                 "updated_at": utc_now_iso(),
             }
             if stage_id == "implementer":
+                scope_cfg = state.get("scope", {})
                 state["code_snapshot"] = compute_workspace_snapshot(
                     layout.root,
                     focus_paths=scope_cfg.get("allowed_paths") or None,
@@ -590,6 +608,41 @@ def transition_stage(
     updated = mutate_session_state_cas(layout, sid, _mutator, expected_revision=expected_revision)
     result_summary["state_revision"] = updated["state_revision"]
     return result_summary
+
+
+def complete_stage(
+    layout: WorkspaceLayout,
+    *,
+    sid: str,
+    stage: str | int | float,
+) -> Dict[str, Any]:
+    """
+    Lệnh gộp 1 bước giúp tăng tốc điều phối (giảm từ 3 lần khởi động CLI xuống còn 1 lần):
+    - Nếu stage đang `pending` -> tự chuyển sang `running`.
+    - Validate handoff trên đĩa và đánh giá tự động xem có cần dừng HITL không.
+    - Nếu `balanced` + không `high_risk` + không có `Open questions` + không `REQUEST_CHANGES` -> chuyển thẳng sang `approved`.
+    - Ngược lại -> chuyển sang `awaiting_approval` và trả `requires_human_approval=True` để Agent gọi `ask_question`.
+    """
+    validate_sid(sid)
+    stage_id = normalize_stage_id(stage)
+    state = load_session_state(layout, sid)
+    cur_status = str((state.get("stages") or {}).get(stage_id, {}).get("status") or StageStatus.PENDING.value)
+    if cur_status == StageStatus.PENDING.value:
+        transition_stage(layout, sid=sid, stage=stage_id, target_status=StageStatus.RUNNING.value)
+
+    try:
+        res = transition_stage(layout, sid=sid, stage=stage_id, target_status=StageStatus.APPROVED.value)
+        res["requires_human_approval"] = False
+        res["auto_passed"] = True
+        return res
+    except SpeedyError as err:
+        if err.code != ErrorCode.GATE_REQUIRED:
+            raise
+        res = transition_stage(layout, sid=sid, stage=stage_id, target_status=StageStatus.AWAITING_APPROVAL.value)
+        res["requires_human_approval"] = True
+        res["auto_passed"] = False
+        res["gate_reason"] = err.message
+        return res
 
 
 def record_gate_decision(

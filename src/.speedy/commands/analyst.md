@@ -1,4 +1,4 @@
-# `/analyst` (`speedy-analyst`) — Lập Implementation Brief Độc Lập
+# `/analyst` — Lập Implementation Brief Độc Lập
 
 ## Mô tả
 Thực thi độc lập (standalone) vai trò Analyst (`Gemini Neon`) để làm rõ yêu cầu, khoanh vùng module qua RepoMap và xuất **Implementation Brief** kèm danh sách `AC-001..N` kiểm chứng được rồi dừng hẳn.

@@ -8,7 +8,7 @@
 
 ```mermaid
 flowchart TD
-    User["Người dùng trên Antigravity IDE"] --> Adapter["Antigravity Customizations (.agents/rules + .agents/skills)"]
+    User["Người dùng trên Antigravity (App / CLI / IDE)"] --> Adapter["Antigravity Customizations (.agents/rules + skills + workflows)"]
     Adapter --> Orchestrator["Orchestrator Role (Gemini Hydrogen)"]
     Orchestrator --> CLI["Speedy Deterministic CLI (speedy_cli.py)"]
 
@@ -20,6 +20,7 @@ flowchart TD
         Lifecycle --> Context["context.py + scan.py + repomap.py (Retrieval & Context Packet)"]
         Lifecycle --> Verify["verification.py (Impact Runner & Anti-Test-Laundering)"]
         Lifecycle --> Audit["audit.py + Viewers (4-Layer Honest Telemetry)"]
+        CLI --> Installer["installer_core.py (Manifest, Remote Update, .gitignore, Rollback)"]
     end
 
     Core --> Disk["ai-workspace/ (Canonical State, Handoffs, Knowledge, Audit)"]
@@ -46,3 +47,37 @@ Policy engine (`policy.py` & `config/policy.default.json`) phân bổ model theo
 | **Context Packet (`context prepare`)** | Cấp phát manifest con trỏ chứa đúng `AC`, `ADR` đã duyệt, phạm vi file và lỗi gần nhất. | Không bao giờ cắt bỏ `AC`, `invariants` hay bằng chứng lỗi cốt lõi. |
 | **Selective Invalidation** | Gắn semantic checksum cho từng artifact và fingerprint cho evidence. | Sửa code chỉ làm invalid kết quả review/test cũ, giữ nguyên approval của Brief/ADR nếu thiết kế không đổi. |
 | **Bounded Tool Output** | Giới hạn byte trả ra stdout kèm cờ `truncated` và đường dẫn log đầy đủ. | Agent vẫn đọc tiếp được đoạn log chi tiết trên đĩa khi cần chẩn đoán sâu. |
+
+---
+
+## 4. Tích Hợp Dual-Surface Cho Slash Commands (App / CLI & IDE Standalone)
+
+| Bề mặt Antigravity | Cơ chế kích hoạt Slash Command `/` | Nguồn nội dung (SSOT) |
+|---|---|---|
+| **Antigravity App 2.0 & CLI (`agy`)** | Tự động chuyển `.agents/skills/<name>/SKILL.md` thành `/<name>` | `.agents/skills/<name>/SKILL.md` (single-line `description: "..."`) |
+| **Antigravity IDE Standalone** | Menu `/` đọc từ `.agents/workflows/<name>.md` | Thin wrapper 5 dòng trỏ về `../skills/<name>/SKILL.md` (tuân thủ DRY) |
+
+- **Speedy DevKit (11 lệnh ngắn gọn)**: `/flow`, `/specs`, `/analyst`, `/docs`, `/docs-view`, `/audit-view`, `/refresh-rule`, `/refresh-style`, `/cleanup`, `/repomap`, `/update-speedy`.
+- **SNOW Builder (10 lệnh quản trị)**: `/builder-flow`, `/builder-analyst`, `/builder-architect`, `/builder-implementer`, `/builder-reviewer`, `/builder-qa`, `/builder-autotest`, `/builder-docs-manager`, `/builder-writer`, `/builder-release`.
+
+---
+
+## 5. Kiến Trúc Phân Phối 1 Lệnh, Auto `.gitignore` & Zero-Config `/update-speedy`
+
+```mermaid
+flowchart LR
+    OneLine["curl -fsSL .../install.sh | bash"] --> Resolve["Chọn tag speedy-v* cao nhất<br/>hoặc fallback nhánh mặc định"]
+    Resolve --> Stage["Shallow clone vào mktemp -d<br/>(trap tự dọn khi thoát)"]
+    Stage --> Apply["scripts/install.py --apply --skip-conflicts<br/>+ ghi .speedy/config/source.local.json"]
+    Apply --> GI["ensure_speedy_gitignore()<br/>Tạo mới hoặc nối idempotent .gitignore"]
+    Apply --> Later["Lần sau tại dự án: /update-speedy"]
+    Later --> UpdateCLI["speedy_cli.py update (dry-run -> HITL -> apply)<br/>Đọc source.local.json + Backup + Rollback"]
+```
+
+- **Thứ tự phân giải nguồn cập nhật** (tuyệt đối không dùng `git remote origin` của dự án đích):
+  1. Tham số `--source`
+  2. Biến môi trường `SPEEDY_SOURCE_URL`
+  3. Khóa `SPEEDY_SOURCE_URL` trong `ai-workspace/.env`
+  4. File cấu hình local `.speedy/config/source.local.json` *(nằm ngoài `manifest.json` để không gây xung đột và không rò rỉ URL Builder vào `src/`)*
+  5. `.speedy/config/source.json`
+- **Bảo mật & Toàn vẹn**: Mọi lệnh `git ls-remote` / `git clone` đều chặn tham số bắt đầu bằng `-` và sử dụng dấu phân tách `--` để ngăn argument injection; rollback khôi phục nguyên trạng cả file kit-owned, `.gitignore` và `source.local.json`.

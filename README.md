@@ -45,38 +45,61 @@ snow-builder/
 
 ---
 
-## 4. Cài Đặt Speedy Vào Dự Án Của Bạn Qua CLI
+## 4. Cài Đặt Speedy Bằng 1 Lệnh Từ Git & Cập Nhật `/update-speedy`
 
-Từ thư mục gốc của **SNOW Builder**, dùng `scripts/install.py` để cài đặt Speedy DevKit vào bất kỳ dự án ứng dụng nào:
+### 4.1. Cài Đặt 1 Lệnh Tại Bất Kỳ Máy Nào (Khuyến Nghị)
+
+Mở terminal tại **thư mục gốc dự án ứng dụng của bạn** và chạy đúng 1 lệnh:
 
 ```bash
-# 1. Xem trước kế hoạch cài đặt (Dry-run an toàn, không ghi file)
-python3 scripts/install.py --target /path/to/your-app --dry-run
-
-# 2. Cài đặt chính thức vào dự án đích
-#    - Tự động thêm block ignore (/.agents/, /.speedy/, /ai-workspace/, /AGENTS.md)
-#      vào .gitignore của dự án để khi push Git không làm nặng repo ứng dụng.
-#    - Tự động tạo bản backup tại ai-workspace/tmp/backups/ trước khi ghi.
-python3 scripts/install.py --target /path/to/your-app --apply --skip-conflicts
+curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash
 ```
 
-**Tùy chọn CLI hữu ích khác:**
-- Giữ nguyên `.gitignore` (nếu bạn muốn commit Speedy chung vào repo):
+Lệnh trên sẽ tự động:
+1. Tải bản mới nhất từ Git (ưu tiên tag phát hành `speedy-vX.Y.Z` cao nhất; tự động lấy nhánh `main` nếu chưa gắn tag) vào thư mục tạm rồi dọn sạch sau khi xong.
+2. Cài đặt Speedy DevKit vào dự án (bảo toàn 100% file có sẵn của dự án nhờ `--skip-conflicts` và tự tạo backup tại `ai-workspace/tmp/backups/`).
+3. **Tự động cập nhật `.gitignore` ở root dự án** (tạo mới nếu chưa có, nối thêm idempotent nếu đã có) gồm `/.agents/`, `/.speedy/`, `/ai-workspace/`, `/AGENTS.md` để không đẩy nhầm Speedy lên repo dự án.
+4. Tự động ghi nhớ nguồn cài đặt vào `.speedy/config/source.local.json` (nằm ngoài manifest) để **các lần sau cập nhật Speedy bạn chỉ cần gõ slash command `/update-speedy`** trên Antigravity IDE.
+
+**Các biến thể hữu ích khi chạy 1 lệnh:**
+- Xem trước kế hoạch cài đặt (dry-run, không ghi file):
   ```bash
-  python3 scripts/install.py --target /path/to/your-app --apply --no-gitignore
+  curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash -s -- --dry-run
   ```
-- Khôi phục nguyên trạng 1 lệnh nếu cần rollback (bao gồm cả `.gitignore`):
+- Giữ nguyên `.gitignore` (nếu muốn commit Speedy vào repo dự án):
   ```bash
-  python3 scripts/install.py --target /path/to/your-app --rollback /path/to/your-app/ai-workspace/tmp/backups/<ten-backup>
+  curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash -s -- --no-gitignore
   ```
-- Đóng gói riêng thành thư mục độc lập để chia sẻ:
+- Cài từ repo nội bộ / Private repo qua SSH hoặc fork riêng:
   ```bash
-  python3 scripts/package.py --out dist/speedy-package
+  curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash -s -- --source git@github.com:litt0709/snow-builder-redesign.git
   ```
-- Chạy kiểm thử toàn bộ Builder & Speedy:
-  ```bash
-  PYTHONDONTWRITEBYTECODE=1 python3 scripts/autotest.py --report-out reports/autotest-final.json
-  ```
+
+### 4.2. Cập Nhật Speedy Ở Các Lần Sau
+Trong Antigravity IDE tại dự án đã cài Speedy, chỉ cần gõ:
+```text
+/update-speedy
+```
+Agent sẽ tự động chạy `python3 .speedy/scripts/speedy_cli.py update` (đọc nguồn từ `.speedy/config/source.local.json`), hiển thị danh sách thay đổi/xung đột, xin xác nhận qua `ask_question`, tạo backup rollback, cập nhật engine và đồng bộ `.gitignore` mà **bảo toàn 100% `ai-workspace/`**.
+
+### 4.3. Cài Đặt Cục Bộ Từ Thư Mục SNOW Builder & Công Cụ Khác
+
+```bash
+# Xem trước kế hoạch cài đặt cục bộ (Dry-run)
+python3 scripts/install.py --target /path/to/your-app --dry-run
+
+# Cài đặt cục bộ
+python3 scripts/install.py --target /path/to/your-app --apply --skip-conflicts
+
+# Khôi phục nguyên trạng 1 lệnh nếu cần rollback (bao gồm cả .gitignore và source.local.json)
+python3 scripts/install.py --target /path/to/your-app --rollback /path/to/your-app/ai-workspace/tmp/backups/<ten-backup>
+
+# Đóng gói riêng thành thư mục độc lập để chia sẻ
+python3 scripts/package.py --out dist/speedy-package
+
+# Chạy kiểm thử toàn bộ Builder & Speedy
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/autotest.py --report-out reports/autotest-final.json
+```
 
 - **Tài liệu chi tiết**:
   - [Hướng dẫn Antigravity Settings, Cài đặt & Sử dụng](docs/ANTIGRAVITY_GUIDE.md)

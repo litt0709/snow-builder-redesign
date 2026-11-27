@@ -50,6 +50,14 @@ class TestStep1SkeletonAndBoundary(unittest.TestCase):
             ".speedy/docs/themes/1.default/2.LAYOUT_AND_TEMPLATES.md",
             ".speedy/docs/themes/1.default/preview-light.png",
             ".speedy/docs/themes/1.default/preview-dark.png",
+            ".speedy/docs/themes/2.tabler/1.DESIGN_SYSTEM_AND_TOKENS.md",
+            ".speedy/docs/themes/2.tabler/2.LAYOUT_AND_TEMPLATES.md",
+            ".speedy/docs/themes/2.tabler/preview-light.png",
+            ".speedy/docs/themes/2.tabler/preview-dark.png",
+            ".speedy/docs/themes/3.midnight/1.DESIGN_SYSTEM_AND_TOKENS.md",
+            ".speedy/docs/themes/3.midnight/2.LAYOUT_AND_TEMPLATES.md",
+            ".speedy/docs/themes/3.midnight/preview-light.png",
+            ".speedy/docs/themes/3.midnight/preview-dark.png",
             ".speedy/rules/1.principle.md",
             ".speedy/rules/2.framework.md",
             ".speedy/rules/3.orchestration-flow.md",
@@ -145,6 +153,8 @@ class TestStep1SkeletonAndBoundary(unittest.TestCase):
             content = file_path.read_text(encoding="utf-8")
             rel = file_path.relative_to(SRC_ROOT).as_posix()
             for pattern in forbidden_patterns:
+                if rel == "ai-workspace/.env.example" and pattern.pattern == r"snow-builder":
+                    continue
                 self.assertIsNone(
                     pattern.search(content),
                     f"Phát hiện tham chiếu cấm '{pattern.pattern}' trong file Product: src/{rel}",

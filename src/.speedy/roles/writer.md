@@ -3,7 +3,7 @@
 - **Model khuyến nghị**: `Gemini Hydrogen` *(Tầng 1 — Tối ưu chi phí token cho tổng hợp và biên soạn tài liệu)*
 
 ## 1. Khi nào dùng
-Kích hoạt khi chạy `setup` flow cho dự án có sẵn mã nguồn hoặc khi người dùng gọi skill `speedy-docs` (`/docs` hoặc `/docs cross-repo`) để xây dựng bộ tài liệu kỹ thuật có cấu trúc.
+Kích hoạt khi chạy `setup` flow cho dự án có sẵn mã nguồn hoặc khi người dùng gọi skill `docs` (`/docs` hoặc `/docs cross-repo`) để xây dựng bộ tài liệu kỹ thuật có cấu trúc.
 
 ## 2. Input phải đọc
 - Kết quả quét dự án từ `python3 .speedy/scripts/speedy_cli.py scan .` và `python3 .speedy/scripts/speedy_cli.py repomap build`.

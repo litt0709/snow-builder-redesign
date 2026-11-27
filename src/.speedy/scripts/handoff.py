@@ -135,6 +135,23 @@ def extract_reviewer_verdict(content: str) -> Optional[str]:
     return m.group(1) if m else None
 
 
+_NO_OPEN_QUESTIONS_RE = re.compile(
+    r"^(?:không\s+có(?:\s+câu\s+hỏi(?:\s+mở)?)?|none|n/a|no\s+open\s+questions|không|nil)(?:[.,;:!\s].*)?$",
+    re.IGNORECASE,
+)
+
+
+def has_meaningful_open_questions(section_body: str) -> bool:
+    """Xác định mục `## Open questions` có chứa câu hỏi mở thực sự cần người dùng chốt hay không."""
+    cleaned = re.sub(r"<!--.*?-->", "", section_body or "", flags=re.DOTALL).strip()
+    lines = [re.sub(r"^[-*•\d.)\s]+", "", ln).strip() for ln in cleaned.splitlines() if ln.strip()]
+    if not lines:
+        return False
+    if len(lines) == 1 and _NO_OPEN_QUESTIONS_RE.match(lines[0]):
+        return False
+    return True
+
+
 def _validate_role_specific_rules(stage: str, content: str) -> List[str]:
     issues: List[str] = []
     if stage == "analyst":
@@ -268,6 +285,9 @@ def validate_handoff(
                 errors.append(exc.message)
 
     errors.extend(_validate_role_specific_rules(stage_id, content))
+    open_q_entry = lower_map.get("## open questions")
+    has_open_q = has_meaningful_open_questions(open_q_entry[1]) if open_q_entry else False
+    reviewer_verdict = extract_reviewer_verdict(content) if stage_id == "reviewer" else None
 
     return {
         "valid": len(errors) == 0,
@@ -276,6 +296,8 @@ def validate_handoff(
         "file_path": rel_path,
         "semantic_checksum": semantic_checksum(content),
         "revision": resume_meta.get("revision", 1) if isinstance(resume_meta, dict) else 1,
+        "has_open_questions": has_open_q,
+        "reviewer_verdict": reviewer_verdict,
         "missing_headings": missing_headings,
         "empty_headings": empty_headings,
         "placeholders": sorted(set(placeholders)),

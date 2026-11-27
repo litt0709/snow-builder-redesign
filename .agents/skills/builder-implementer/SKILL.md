@@ -1,7 +1,6 @@
 ---
 name: builder-implementer
-description: >-
-  Kích hoạt khi đóng vai trò Implementer Agent của SNOW Builder để hiện thực hóa mã nguồn DevKit hoặc script Builder theo đúng Architecture Brief đã duyệt.
+description: "Kích hoạt khi đóng vai trò Implementer Agent của SNOW Builder để hiện thực hóa mã nguồn DevKit hoặc script Builder theo đúng Architecture Brief đã duyệt."
 ---
 
 # Builder Implementer Agent (`builder-implementer`)

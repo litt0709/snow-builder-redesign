@@ -1,7 +1,6 @@
 ---
 name: builder-docs-manager
-description: >-
-  Kích hoạt khi đóng vai trò Docs Manager của SNOW Builder để đồng bộ docs/, rules/ và AGENTS.md sau khi hoàn tất thay đổi kiến trúc hoặc mã nguồn.
+description: "Kích hoạt khi đóng vai trò Docs Manager của SNOW Builder để đồng bộ docs/, rules/ và AGENTS.md sau khi hoàn tất thay đổi kiến trúc hoặc mã nguồn."
 ---
 
 # Builder Docs Manager (`builder-docs-manager`)

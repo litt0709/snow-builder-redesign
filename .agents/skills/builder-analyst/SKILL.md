@@ -1,7 +1,6 @@
 ---
 name: builder-analyst
-description: >-
-  Kích hoạt khi đóng vai trò Analyst Agent của SNOW Builder để phân tích yêu cầu nâng cấp/sửa lỗi DevKit và xuất Implementation Brief.
+description: "Kích hoạt khi đóng vai trò Analyst Agent của SNOW Builder để phân tích yêu cầu nâng cấp/sửa lỗi DevKit và xuất Implementation Brief."
 ---
 
 # Builder Analyst Agent (`builder-analyst`)

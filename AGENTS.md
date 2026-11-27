@@ -21,7 +21,7 @@
 |---|---|
 | **Core (KISS, DRY, YAGNI, SOLID)** | Lõi nhỏ stdlib Python, hợp đồng role tập trung một nơi, chỉ tích hợp thuần Antigravity (`.agents/`). |
 | **Correctness-First** | Khi tốc độ/token xung đột với tính đúng đắn, luôn ưu tiên correctness. Không bỏ gate/test để lấy số đẹp. |
-| **Strict AI-DD & Evidence-First** | Mặc định `strict`: ghi artifact → validate contract → cập nhật canonical `state.json` → xin human approval (`ask_question`). Không báo "xong" khi chưa có verification evidence. |
+| **Balanced AI-DD & Evidence-First** | Mặc định `balanced` (Smart HITL): ghi artifact → chạy `state complete` (tự validate & auto-pass stage rủi ro thấp không có câu hỏi mở) → chỉ dừng gọi `ask_question` khi có `Open questions`, `high_risk`, `REQUEST_CHANGES`, xung đột hoặc release (vẫn hỗ trợ `--policy strict`). Không báo "xong" khi chưa có verification evidence. |
 | **Lazy Load & Context Packet** | Index trước (`repomap`, `overview.md`) → tài liệu chi tiết sau → source liên quan cuối cùng. Không preload toàn bộ `rules/`, `docs/` hay `sessions/`. |
 | **Scope Discipline & Portable** | Chỉ sửa trong scope đã duyệt. Không hardcode đường dẫn máy cá nhân hay URL nội bộ. |
 | **Ngôn ngữ & Trình bày** | 100% Tiếng Việt rõ ràng (giữ thuật ngữ kỹ thuật, CLI command, JSON key, path). Ưu tiên bảng/list súc tích. |

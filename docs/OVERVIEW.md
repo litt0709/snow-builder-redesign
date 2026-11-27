@@ -21,21 +21,22 @@
 ```mermaid
 flowchart LR
     subgraph Builder["SNOW Builder (Root Repo)"]
-        BR["AGENTS.md + rules/ + .agents/"]
-        BS["scripts/ (package, install, autotest)"]
-        BT["tests/ (Static + CLI + E2E Fixture)"]
+        BR["AGENTS.md + rules/ + .agents/ (Rules, Skills, Workflows)"]
+        BS["scripts/ (install.sh, install.py, package.py, autotest.py)"]
+        BT["tests/ (Static + CLI + Installer + E2E Fixture)"]
         BP["plans/ + sessions/"]
     end
 
     subgraph Product["Speedy DevKit (src/ — Xuất độc lập)"]
-        PA["AGENTS.md + .agents/ (Rules & Skills)"]
+        PA["AGENTS.md + .agents/ (Rules, Skills & Workflows)"]
         PE[".speedy/ (roles, flows, commands, schemas, scripts)"]
-        PW["ai-workspace/ (docs, sessions, state, audit)"]
+        PW["ai-workspace/ (docs, specs, sessions, state, audit)"]
     end
 
     Builder -->|"Xây dựng, kiểm thử & đóng gói"| Product
-    Product -->|"install.py / copy-out"| UserApp["Dự án Ứng dụng trên Antigravity IDE"]
+    Product -->|"1 lệnh curl | bash / install.py + /update-speedy"| UserApp["Dự án Ứng dụng trên Antigravity (App / CLI / IDE)"]
 ```
 
-- **Ranh giới một chiều**: Builder được phép gọi kiểm thử và đóng gói `src/`, nhưng **không một file nào trong `src/`** được phép import hay trỏ đường dẫn ngược về Builder.
-- Xem chi tiết thiết kế kỹ thuật tại [ARCHITECTURE.md](ARCHITECTURE.md) và bản đồ thành phần sản phẩm tại [product/README.md](product/README.md).
+- **Ranh giới một chiều**: Builder được phép gọi kiểm thử và đóng gói `src/`, nhưng **không một file nào trong `src/`** được phép import hay trỏ đường dẫn ngược về Builder (URL nguồn Git được lưu runtime tại `.speedy/config/source.local.json` của dự án đích, nằm ngoài `manifest.json`).
+- **Tương thích Dual-Surface**: Hỗ trợ song song `.agents/skills/` (Antigravity App 2.0 / CLI) và thin wrappers `.agents/workflows/` (Antigravity IDE standalone) để mọi slash command ngắn gọn (`/flow`, `/specs`, `/docs`, `/update-speedy`,...) hoạt động nhất quán trên mọi bề mặt.
+- Xem chi tiết thiết kế kỹ thuật tại [ARCHITECTURE.md](ARCHITECTURE.md), hướng dẫn cài đặt & cấu hình tại [ANTIGRAVITY_GUIDE.md](ANTIGRAVITY_GUIDE.md) và bản đồ thành phần sản phẩm tại [product/README.md](product/README.md).

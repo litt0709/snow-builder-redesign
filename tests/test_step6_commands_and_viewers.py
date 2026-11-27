@@ -53,11 +53,12 @@ class TestStep6UserCommandsAndViewers(unittest.TestCase):
             content = (cmd_dir / cname).read_text(encoding="utf-8")
             self.assertIsNone(banned.search(content), f"Command spec {cname} còn sót từ khóa cấm")
 
-        # Kiểm tra mọi Markdown link trong src/AGENTS.md và src/.agents/skills/*/SKILL.md đều trỏ tới file có thật!
+        # Kiểm tra mọi Markdown link trong src/AGENTS.md, src/.agents/skills/*/SKILL.md và src/.agents/workflows/*.md đều trỏ tới file có thật!
         link_re = re.compile(r"\]\(([^)#\s]+)\)")
         check_sources = [
             SRC_ROOT / "AGENTS.md",
             *list((SRC_ROOT / ".agents" / "skills").glob("*/SKILL.md")),
+            *list((SRC_ROOT / ".agents" / "workflows").glob("*.md")),
         ]
         for md_file in check_sources:
             raw = md_file.read_text(encoding="utf-8")

@@ -40,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--skip-conflicts", action="store_true", help="Giữ nguyên các file dự án bị xung đột")
     parser.add_argument("--force-overwrite", action="store_true", help="Ghi đè cả file xung đột (có lưu backup)")
     parser.add_argument("--no-gitignore", action="store_true", help="Không tự động thêm thư mục Speedy vào .gitignore dự án đích")
+    parser.add_argument("--source-url", help="URL Git hoặc đường dẫn nguồn lưu vào .speedy/config/source.local.json cho /update-speedy")
+    parser.add_argument("--source-ref", help="Tag hoặc nhánh Git đã dùng khi cài đặt")
+    parser.add_argument("--source-kind", choices=["tag", "branch", "local", "git"], help="Loại nguồn cài đặt")
+    parser.add_argument("--installed-commit", help="Commit SHA của phiên bản đã cài đặt")
     parser.add_argument("--rollback", help="Khôi phục từ đường dẫn thư mục backup")
     args = parser.parse_args(argv)
 
@@ -55,6 +59,15 @@ def main(argv: list[str] | None = None) -> int:
         if not (pkg_path / ".speedy" / "manifest.json").is_file():
             write_manifest_in_place(pkg_path)
 
+        source_meta = None
+        if args.source_url:
+            source_meta = {
+                "source_url": args.source_url,
+                "source_ref": args.source_ref,
+                "source_kind": args.source_kind or "git",
+                "installed_commit": args.installed_commit,
+            }
+
         is_dry = args.dry_run or not args.apply
         res = apply_install_or_update(
             pkg_path,
@@ -63,6 +76,7 @@ def main(argv: list[str] | None = None) -> int:
             force_overwrite_conflicts=args.force_overwrite,
             allow_with_conflicts_skipped=args.skip_conflicts,
             update_gitignore=not args.no_gitignore,
+            source_meta=source_meta,
         )
         print(json.dumps(res, ensure_ascii=False, indent=2))
         return 0

@@ -3,7 +3,7 @@
 - **Model khuyến nghị**: `Gemini Hydrogen` *(Tầng 1 — Nhẹ, nhanh, tiết kiệm quota điều phối)*
 
 ## 1. Khi nào dùng
-Kích hoạt khi điều phối toàn bộ luồng AI-DD (`setup`, `feature`, `fix`, `simple`, `verify`) thông qua skill `speedy-flow` hoặc khi resume một session đang dang dở.
+Kích hoạt khi điều phối toàn bộ luồng AI-DD (`setup`, `feature`, `fix`, `simple`, `verify`) thông qua skill `flow` hoặc khi resume một session đang dang dở.
 
 ## 2. Input phải đọc
 - `AGENTS.md` (tại gốc dự án) và `.speedy/flows/flow.md`.

@@ -2,6 +2,16 @@
 
 Mọi thay đổi quan trọng của SNOW Builder và gói sản phẩm Speedy DevKit tuân thủ chuẩn Semantic Versioning (`MAJOR.MINOR.PATCH`).
 
+## [Unreleased] — 2026-11-27
+
+### Cải Tiến Cài Đặt 1 Lệnh Từ Git, Auto `.gitignore` & Zero-Config `/update-speedy`
+- **Remote 1-Command Installer (`scripts/install.sh`)**: Hỗ trợ cài Speedy bằng 1 lệnh `curl -fsSL https://raw.githubusercontent.com/litt0709/snow-builder-redesign/main/scripts/install.sh | bash` tại thư mục gốc bất kỳ dự án nào, ưu tiên tag `speedy-vX.Y.Z` cao nhất và tự động fallback nhánh mặc định (`main`) nếu chưa gắn tag.
+- **Auto `.gitignore` & Rollback sạch**: Tự tạo mới `.gitignore` (nếu chưa có) hoặc nối idempotent block `/.agents/`, `/.speedy/`, `/ai-workspace/`, `/AGENTS.md` để không đẩy nhầm Speedy lên repo dự án đích; hỗ trợ rollback nguyên trạng.
+- **Zero-Config `/update-speedy`**: Tự lưu nguồn cài đặt vào `.speedy/config/source.local.json` (nằm ngoài `manifest.json`), đổi tên skill thành `update-speedy` để `/update-speedy` khớp trực tiếp trên Antigravity IDE, hỗ trợ branch fallback + chuyển mượt sang tag release, và chặn argument injection trong các lệnh `git`.
+- **Slash Commands Ngắn Gọn & Tương Thích Dual-Surface (App / CLI / IDE Standalone)**:
+  - Bỏ tiền tố `speedy-` trên toàn bộ 10 lệnh Speedy (`/flow`, `/specs`, `/analyst`, `/docs`, `/docs-view`, `/audit-view`, `/refresh-rule`, `/refresh-style`, `/cleanup`, `/repomap`, giữ `/update-speedy`).
+  - Bổ sung thin workflow wrappers tại `.agents/workflows/` cho cả SNOW Builder (10 lệnh `/builder-*`) và Speedy DevKit (11 lệnh) kèm chuẩn hóa YAML frontmatter single-line để menu slash command `/` hoạt động ngay trên **Antigravity IDE standalone** lẫn **Antigravity App 2.0 / CLI**.
+
 ## [2.0.0] — 2026-11-27
 
 ### Phát hành Kiến trúc Tái thiết kế Hoàn chỉnh (Antigravity Edition)

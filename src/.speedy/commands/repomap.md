@@ -1,4 +1,4 @@
-# `/repomap` (`speedy-repomap`) — Định Vị Nhanh Module Mã Nguồn
+# `/repomap` — Định Vị Nhanh Module Mã Nguồn
 
 ## Mô tả
 Xây dựng và truy vấn chỉ mục cấp module để trả lời câu hỏi **WHERE — mã nguồn liên quan nằm ở đâu** chỉ với vài trăm byte JSON, tránh quét toàn bộ dự án gây tốn token.

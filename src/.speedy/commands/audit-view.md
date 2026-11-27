@@ -1,4 +1,4 @@
-# `/audit-view` (`speedy-audit-view`) — Kết Xuất Bảng Điều Khiển Audit Tháng
+# `/audit-view` — Kết Xuất Bảng Điều Khiển Audit Tháng
 
 ## Mô tả
 Tổng hợp các bản ghi Audit 4 lớp trong `ai-workspace/audit/` thành báo cáo HTML độc lập theo tháng (`YYYY-MM`).

@@ -1,4 +1,4 @@
-# `/flow` (`speedy-flow`) — Điều Phối Chu Trình AI-DD Đầy Đủ
+# `/flow` — Điều Phối Chu Trình AI-DD Đầy Đủ
 
 ## Mô tả
 Điểm vào chính để triển khai mọi tác vụ phần mềm (`feature`, `fix`, `simple`, `verify`, `setup`) với cơ chế định tuyến theo rủi ro, Context Packet tiết kiệm token và kiểm soát cổng phê duyệt nghiêm ngặt trên Antigravity IDE.

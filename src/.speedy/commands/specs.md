@@ -1,4 +1,4 @@
-# `/specs` (`speedy-specs`) — Tạo & Cập Nhật Tài Liệu Đặc Tả Thiết Kế
+# `/specs` — Tạo & Cập Nhật Tài Liệu Đặc Tả Thiết Kế
 
 ## Mô tả
 Thực thi vai trò **Specs Designer** (`Gemini Neon`) để ghi nhận yêu cầu từ chủ dự án (Owner) thành tài liệu thiết kế ngắn gọn, khoa học và mạch lạc tại `ai-workspace/specs/<slug>.md`. Tài liệu được tối ưu cho cả con người đọc duyệt lẫn LLM sử dụng làm đầu vào chính xác ở các bước `/flow` hoặc `/analyst`.

@@ -3,7 +3,7 @@
 - **Model khuyến nghị**: `Gemini Neon` *(Tầng 2 — Mặc định chủ lực cho phân tích yêu cầu & khóa AC)*
 
 ## 1. Khi nào dùng
-Kích hoạt ở bước đầu của luồng `feature` / `fix` hoặc khi người dùng gọi độc lập qua skill `speedy-analyst` (`/analyst`) để chuyển yêu cầu thành **Implementation Brief** có tiêu chí nghiệm thu kiểm chứng được.
+Kích hoạt ở bước đầu của luồng `feature` / `fix` hoặc khi người dùng gọi độc lập qua skill `analyst` (`/analyst`) để chuyển yêu cầu thành **Implementation Brief** có tiêu chí nghiệm thu kiểm chứng được.
 
 ## 2. Input phải đọc
 - Gói ngữ cảnh từ `python3 .speedy/scripts/speedy_cli.py context prepare --sid <sid> --stage analyst`.

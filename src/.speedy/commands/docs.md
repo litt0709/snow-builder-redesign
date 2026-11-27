@@ -1,4 +1,4 @@
-# `/docs` (`speedy-docs`) — Biên Soạn Tài Liệu Kỹ Thuật & Cross-Repo
+# `/docs` — Biên Soạn Tài Liệu Kỹ Thuật & Cross-Repo
 
 ## Mô tả
 Kích hoạt vai trò Writer (`Gemini Hydrogen`) để quét 2 cấp module runtime, lập **Topic Map** và biên soạn bộ tài liệu phân mảnh vào `ai-workspace/docs/` (hoặc ghi tóm tắt liên dự án với cú pháp `/docs cross-repo <repo-id> "<mô tả>"`).
