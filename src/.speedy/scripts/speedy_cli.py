@@ -22,56 +22,32 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from adapters import get_antigravity_capabilities  # noqa: E402
-from audit import finalize_audit, record_audit_event, start_audit  # noqa: E402
-from audit_viewer import render_audit_dashboard  # noqa: E402
-from benchmark import compare_paired_runs, evaluate_context_and_routing_suite  # noqa: E402
-from catalog import build_catalog  # noqa: E402
-from cleanup import run_cleanup  # noqa: E402
-from context import (  # noqa: E402
-    check_docs_freshness,
-    compact_session_checkpoint,
-    prepare_context_packet,
-    promote_lesson_to_project,
-    propose_lesson,
-    query_cross_repo_registry,
-    register_cross_repo_topic,
-    stamp_source_ref_line,
-)
 from contracts import ErrorCode, SpeedyError, resolve_layout, resolve_within_scope  # noqa: E402
-from docs_viewer import render_docs_site  # noqa: E402
-from handoff import validate_handoff  # noqa: E402
-from installer_core import rollback_from_backup, update_from_source  # noqa: E402
-from lifecycle import (  # noqa: E402
-    complete_stage,
-    complete_worker_uow,
-    create_session,
-    list_sessions,
-    record_gate_decision,
-    register_worker_uow,
-    resolve_target_sid,
-    resume_session,
-    transition_stage,
-)
-from policy import classify_intent, select_gemini_model  # noqa: E402
-from repomap import build_repomap, query_repomap  # noqa: E402
-from scaffold import scaffold_handoff  # noqa: E402
-from scan import scan_project  # noqa: E402
-from storage import load_session_state  # noqa: E402
-from verification import build_verify_plan, run_verification  # noqa: E402
+
+_COMPACT_JSON = False
 
 
 def _emit_ok(payload: Dict[str, Any]) -> int:
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    if _COMPACT_JSON:
+        print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    else:
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
 
 def _emit_err(err: SpeedyError) -> int:
-    print(json.dumps(err.to_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
+    if _COMPACT_JSON:
+        print(json.dumps(err.to_dict(), ensure_ascii=False, separators=(",", ":")), file=sys.stderr)
+    else:
+        print(json.dumps(err.to_dict(), ensure_ascii=False, indent=2), file=sys.stderr)
     return err.exit_code
 
 
 def _handle_session(layout, args: argparse.Namespace) -> int:
+    from audit import start_audit
+    from lifecycle import create_session, list_sessions, resolve_target_sid, resume_session
+    from storage import load_session_state
+
     action = args.session_action
     if action == "new":
         res = create_session(
@@ -114,12 +90,16 @@ def _handle_session(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_intent(layout, args: argparse.Namespace) -> int:
+    from policy import classify_intent
+
     del layout
     text = " ".join(args.text)
     return _emit_ok(classify_intent(text, target_paths=args.paths))
 
 
 def _handle_model(layout, args: argparse.Namespace) -> int:
+    from policy import select_gemini_model
+
     del layout
     return _emit_ok(
         select_gemini_model(
@@ -132,10 +112,14 @@ def _handle_model(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_scan(layout, args: argparse.Namespace) -> int:
+    from scan import scan_project
+
     return _emit_ok(scan_project(layout, args.path, sid=args.sid, use_cache=not args.no_cache))
 
 
 def _handle_repomap(layout, args: argparse.Namespace) -> int:
+    from repomap import build_repomap, query_repomap
+
     action = args.repomap_action
     if action == "query" or getattr(args, "query_text", None):
         kw = " ".join(args.keyword) if getattr(args, "keyword", None) else args.query_text
@@ -144,15 +128,21 @@ def _handle_repomap(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_catalog(layout, args: argparse.Namespace) -> int:
+    from catalog import build_catalog
+
     return _emit_ok(build_catalog(layout, use_cache=not args.no_cache))
 
 
 def _handle_capabilities(layout, args: argparse.Namespace) -> int:
+    from adapters import get_antigravity_capabilities
+
     del args
     return _emit_ok(get_antigravity_capabilities(layout))
 
 
 def _handle_scaffold(layout, args: argparse.Namespace) -> int:
+    from scaffold import scaffold_handoff
+
     return _emit_ok(
         scaffold_handoff(
             layout,
@@ -165,6 +155,9 @@ def _handle_scaffold(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_handoff(layout, args: argparse.Namespace) -> int:
+    from handoff import validate_handoff
+    from storage import load_session_state
+
     if args.handoff_action != "validate":
         raise SpeedyError(ErrorCode.INVALID_INPUT, "Dùng: speedy_cli.py handoff validate --sid <SID> --stage <STAGE>")
     scope_allowed = None
@@ -195,6 +188,15 @@ def _handle_handoff(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_state(layout, args: argparse.Namespace) -> int:
+    from lifecycle import (
+        complete_stage,
+        complete_worker_uow,
+        register_worker_uow,
+        resolve_target_sid,
+        transition_stage,
+    )
+    from storage import load_session_state
+
     if args.state_action == "get":
         sid = resolve_target_sid(layout, args.sid, for_mutation=False)
         return _emit_ok(load_session_state(layout, sid))
@@ -242,6 +244,8 @@ def _handle_state(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_gate(layout, args: argparse.Namespace) -> int:
+    from lifecycle import record_gate_decision
+
     return _emit_ok(
         record_gate_decision(
             layout,
@@ -257,6 +261,8 @@ def _handle_gate(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_context(layout, args: argparse.Namespace) -> int:
+    from context import compact_session_checkpoint, prepare_context_packet
+
     if args.context_action == "prepare":
         return _emit_ok(prepare_context_packet(layout, sid=args.sid, stage=args.stage, query=args.query))
     if args.context_action == "compact":
@@ -265,6 +271,15 @@ def _handle_context(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_knowledge(layout, args: argparse.Namespace) -> int:
+    from context import (
+        check_docs_freshness,
+        promote_lesson_to_project,
+        propose_lesson,
+        query_cross_repo_registry,
+        register_cross_repo_topic,
+        stamp_source_ref_line,
+    )
+
     action = args.knowledge_action
     if action == "check-freshness":
         return _emit_ok(check_docs_freshness(layout))
@@ -325,6 +340,8 @@ def _parse_kv_checks(pairs: list[str] | None) -> Dict[str, str]:
 
 
 def _handle_verify(layout, args: argparse.Namespace) -> int:
+    from verification import build_verify_plan, run_verification
+
     checks = _parse_kv_checks(getattr(args, "check", None))
     if args.verify_action == "plan":
         return _emit_ok(
@@ -348,6 +365,8 @@ def _handle_verify(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_audit(layout, args: argparse.Namespace) -> int:
+    from audit import finalize_audit, record_audit_event, start_audit
+
     action = args.audit_action
     if action == "start":
         return _emit_ok(
@@ -401,6 +420,8 @@ def _handle_audit(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_docs_view(layout, args: argparse.Namespace) -> int:
+    from docs_viewer import render_docs_site
+
     res = render_docs_site(
         layout,
         docs_dir=args.docs_dir,
@@ -419,6 +440,8 @@ def _handle_docs_view(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_audit_view(layout, args: argparse.Namespace) -> int:
+    from audit_viewer import render_audit_dashboard
+
     res = render_audit_dashboard(
         layout,
         month=args.month,
@@ -441,6 +464,8 @@ def _handle_audit_view(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_cleanup(layout, args: argparse.Namespace) -> int:
+    from cleanup import run_cleanup
+
     return _emit_ok(
         run_cleanup(
             layout,
@@ -455,6 +480,7 @@ def _handle_cleanup(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_benchmark(layout, args: argparse.Namespace) -> int:
+    from benchmark import compare_paired_runs, evaluate_context_and_routing_suite
     from storage import read_json_safe
 
     if args.benchmark_action == "suite":
@@ -468,6 +494,8 @@ def _handle_benchmark(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_update(layout, args: argparse.Namespace) -> int:
+    from installer_core import rollback_from_backup, update_from_source
+
     if args.rollback:
         bdir = resolve_within_scope(layout.root, args.rollback)
         return _emit_ok(rollback_from_backup(bdir, layout.root))
@@ -490,6 +518,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--workspace", "--base", dest="workspace", default=".", help="Thư mục gốc workspace (mặc định: .)")
     parser.add_argument("--layout", choices=["auto", "product", "builder"], default="auto", help="Kiểu layout workspace")
+    parser.add_argument("--compact", action="store_true", help="Xuất JSON rút gọn 1 dòng (tiết kiệm ~25-30%% token cho Agent)")
     sub = parser.add_subparsers(dest="command")
 
     # 1. session
@@ -731,8 +760,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    global _COMPACT_JSON
     parser = build_parser()
     args = parser.parse_args(argv)
+    _COMPACT_JSON = bool(getattr(args, "compact", False))
     if not args.command:
         parser.print_help(sys.stderr)
         return 1

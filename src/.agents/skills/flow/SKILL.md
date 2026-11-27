@@ -1,13 +1,15 @@
 ---
 name: flow
-description: "Chạy quy trình AI-DD đầy đủ (feature, fix, simple, verify, setup) với Handoff Contract, Context Packet tiết kiệm token và kiểm soát Stage Gate nghiêm ngặt. Kích hoạt khi người dùng gọi /flow hoặc yêu cầu triển khai task theo quy trình Speedy."
+description: "Chạy quy trình AI-DD đầy đủ (feature, fix, simple, verify, setup) theo chế độ Balanced Smart HITL, tối ưu tốc độ & token với Handoff Contract và Verification Gate. Kích hoạt khi gọi /flow."
 ---
 
 # Speedy Flow (`/flow`)
 
-1. Đọc `AGENTS.md` và `.speedy/commands/flow.md`.
-2. Nạp hợp đồng điều phối tại [.speedy/roles/orchestrator.md](../../../.speedy/roles/orchestrator.md) (khuyến nghị dùng **Gemini Hydrogen** cho điều phối).
-3. Chạy `python3 .speedy/scripts/speedy_cli.py intent "<yêu cầu>"` để phân loại `mode` và đánh giá tín hiệu rủi ro; khởi tạo session bằng `session new` hoặc tiếp tục bằng `session resume --sid <sid>`.
-4. Chỉ đọc đúng một file luồng tại `.speedy/flows/<mode>-flow.md` (không nạp trước toàn bộ các file flow khác).
-5. Ở mỗi stage: gọi `context prepare`, thực thi theo `.speedy/roles/<role>.md`, chạy `state transition --status awaiting_approval`, hiển thị link artifact và gọi `ask_question` xin phép người dùng trước khi `gate approve --actor human`.
-6. Kết thúc bằng bằng chứng kiểm thử từ `speedy_cli.py verify run` và báo cáo audit trung thực.
+1. Đọc `AGENTS.md` (nếu chưa đọc trong phiên) và nạp [.speedy/roles/orchestrator.md](../../../.speedy/roles/orchestrator.md) (khuyến nghị **Gemini Hydrogen**).
+2. **Khởi tạo 1 bước**: Chạy thẳng `python3 -B .speedy/scripts/speedy_cli.py session new --slug "<slug>" --goal "<yêu cầu>" --command-ref /flow` *(tự phân loại `mode`, `high_risk`, model tier và tạo plan/state — không cần gọi riêng lệnh `intent`)*, hoặc `session resume --sid <sid>`.
+3. Chỉ đọc **đúng 1 file kịch bản** `.speedy/flows/<mode>-flow.md` (và với dự án Web chưa có `selected_theme`, chọn theme trong `.speedy/docs/themes/`).
+4. **Vòng lặp Stage tốc độ cao**:
+   - Batch song song các lượt đọc/ghi độc lập; chỉ chạy targeted test cục bộ khi đang code.
+   - Sau khi ghi handoff, chạy đúng **1 lệnh gộp**: `python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <stage>`.
+   - Chỉ gọi `ask_question` + `gate approve|reject|abort --actor human` khi `requires_human_approval == true` (có `Open questions`, `high_risk`, `REQUEST_CHANGES`, xung đột/release, hoặc `--policy strict`).
+5. **Wrap-up (1 lần verify duy nhất)**: Chạy `python3 -B .speedy/scripts/speedy_cli.py verify run --sid <sid>` → đóng phiên `state transition --stage wrapup --status approved` → `audit finalize` và báo cáo trung thực.

@@ -63,11 +63,16 @@ Chỉ kích hoạt **1 lần duy nhất** khi dựng dự án Web mới (hoặc 
 
 ---
 
-## 5. Quy Ước Stage Gate Chuẩn Trên Antigravity IDE
+## 5. Quy Ước Stage Gate Chuẩn (`balanced` Mặc Định vs `strict`)
 
-Trước mọi cổng phê duyệt (`strict` mặc định):
+Cuối mỗi stage chuyên môn:
 1. Ghi file handoff vào `ai-workspace/sessions/<sid>/`.
-2. Chạy `python3 .speedy/scripts/speedy_cli.py state transition --sid <sid> --stage <stage> --status awaiting_approval` (tự động chạy Deep Handoff Validator).
-3. Gửi thông báo ngắn kèm Markdown link tới file artifact để người dùng bấm mở xem.
-4. Gọi công cụ `ask_question` với 3 lựa chọn: `(Recommended) Approve — Tiếp tục` / `Request Changes — Chỉnh sửa lại` / `Abort — Dừng phiên`.
-5. Ghi nhận quyết định thực tế của người dùng qua `python3 .speedy/scripts/speedy_cli.py gate approve|reject|abort --sid <sid> --stage <stage> --actor human --interaction-ref <mã-lượt-hỏi>`.
+2. Chạy **1 lệnh gộp duy nhất**:
+   ```bash
+   python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <stage>
+   ```
+   *(Tự động chuyển `running`, chạy Deep Handoff Validator, và chuyển `approved` ngay nếu đạt chuẩn ở chế độ `balanced`; chỉ dừng `awaiting_approval` khi `requires_human_approval == true`)*.
+3. **Chỉ khi `requires_human_approval == true`** (có `Open questions`, `high_risk`, `REQUEST_CHANGES`, hoặc chạy `--policy strict`):
+   - Gửi thông báo ngắn kèm Markdown link tới file artifact.
+   - Gọi `ask_question` (`(Recommended) Approve — Tiếp tục` / `Request Changes — Chỉnh sửa lại` / `Abort — Dừng phiên`).
+   - Ghi nhận quyết định qua `python3 -B .speedy/scripts/speedy_cli.py gate approve|reject|abort --sid <sid> --stage <stage> --actor human --interaction-ref <mã-lượt-hỏi>`.
