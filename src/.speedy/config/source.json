@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "product_name": "Speedy DevKit",
+  "tag_prefix": "speedy-v",
+  "source_url": null,
+  "package_subpath": "src",
+  "note": "Cấu hình URL nguồn hoặc biến môi trường SPEEDY_SOURCE_URL khi dùng /update-speedy qua Git remote. Hỗ trợ cài đặt trực tiếp từ thư mục đóng gói cục bộ khi source_url là null."
+}

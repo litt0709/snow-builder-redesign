@@ -1,0 +1,17 @@
+{
+  "speedy-safety-guard": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command|write_file|edit_file|read_file|write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'if [ -f ../.speedy/scripts/hook_guard.py ]; then exec python3 ../.speedy/scripts/hook_guard.py; else exec python3 .speedy/scripts/hook_guard.py; fi'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

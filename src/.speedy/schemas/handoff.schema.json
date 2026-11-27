@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SpeedyHandoffContract",
+  "type": "object",
+  "required": [
+    "required_headings",
+    "resume_metadata"
+  ],
+  "properties": {
+    "required_headings": {
+      "type": "array",
+      "const": [
+        "## Summary",
+        "## Scope",
+        "## Risks",
+        "## Dependencies",
+        "## Open questions"
+      ]
+    },
+    "resume_metadata": {
+      "type": "object",
+      "required": [
+        "sid",
+        "stage",
+        "revision",
+        "input_refs",
+        "next_action",
+        "verification_refs"
+      ],
+      "properties": {
+        "sid": { "type": "string" },
+        "stage": { "type": "string" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "input_refs": { "type": "array", "items": { "type": "string" } },
+        "next_action": { "type": "string" },
+        "verification_refs": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

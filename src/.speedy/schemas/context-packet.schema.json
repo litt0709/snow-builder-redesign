@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SpeedyContextPacket",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "sid",
+    "stage",
+    "recommended_model",
+    "goal",
+    "acceptance_criteria",
+    "scope",
+    "non_goals",
+    "invariants",
+    "approved_decisions",
+    "input_refs",
+    "open_assumptions",
+    "failure_evidence",
+    "required_output",
+    "stop_conditions",
+    "context_budget"
+  ]
+}

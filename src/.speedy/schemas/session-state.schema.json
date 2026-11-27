@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SpeedyCanonicalSessionState",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "state_revision",
+    "sid",
+    "slug",
+    "goal",
+    "workspace_root",
+    "mode",
+    "policy",
+    "execution_mode",
+    "scope",
+    "current_stage",
+    "status",
+    "stages",
+    "budget",
+    "artifacts",
+    "approvals",
+    "verification",
+    "uow_attempts",
+    "retry_count",
+    "failure_history",
+    "blocked_reason",
+    "next_action",
+    "updated_at"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 2 },
+    "state_revision": { "type": "integer", "minimum": 1 },
+    "sid": { "type": "string", "minLength": 10 },
+    "slug": { "type": "string" },
+    "goal": { "type": "string" },
+    "workspace_root": { "type": "string" },
+    "mode": { "enum": ["setup", "feature", "fix", "simple", "verify"] },
+    "policy": { "enum": ["strict", "balanced"] },
+    "execution_mode": { "enum": ["antigravity_subagent", "sequential_roles"] },
+    "current_stage": { "type": "string" },
+    "status": {
+      "enum": ["in_progress", "awaiting_approval", "completed", "failed", "blocked", "aborted"]
+    },
+    "uow_attempts": { "type": "integer", "minimum": 0 },
+    "retry_count": { "type": "integer", "minimum": 0 },
+    "blocked_reason": { "type": ["string", "null"] },
+    "next_action": { "type": "string" },
+    "updated_at": { "type": "string" }
+  }
+}

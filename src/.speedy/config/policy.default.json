@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "ide_target": "antigravity",
+  "default_profile": "strict",
+  "model_routing": {
+    "provider": "gemini-pro-antigravity",
+    "default_model": "Gemini Neon",
+    "tiers": {
+      "light": {
+        "model": "Gemini Hydrogen",
+        "subagent_model_hint": "flash",
+        "roles": [
+          "orchestrator",
+          "docs-manager",
+          "writer"
+        ],
+        "description": "Tác vụ điều phối, tổng hợp và viết tài liệu ít phức tạp."
+      },
+      "standard": {
+        "model": "Gemini Neon",
+        "subagent_model_hint": "inherit",
+        "roles": [
+          "analyst",
+          "specs",
+          "implementer",
+          "tester",
+          "architect",
+          "reviewer"
+        ],
+        "description": "Tác vụ phát triển, phân tích và kiểm thử bình thường."
+      },
+      "complex_restricted": {
+        "model": "Gemini Carbon",
+        "subagent_model_hint": "pro",
+        "quota_guard": "strict_limit",
+        "eligible_roles": [
+          "architect",
+          "reviewer"
+        ],
+        "escalation_triggers": [
+          "high_risk_domain",
+          "complex_architecture",
+          "repeated_verification_failure"
+        ],
+        "description": "Chỉ dùng cho nội dung độ phức tạp rất cao; hạn chế tối đa vì nhanh chạm giới hạn quota."
+      }
+    }
+  },
+  "profiles": {
+    "strict": {
+      "gate_policy": "strict",
+      "max_uow_attempts": 3,
+      "max_parallel_workers": 2,
+      "stage_deadline_seconds": 600,
+      "max_tool_calls": 60,
+      "max_context_packet_bytes": 16384,
+      "max_tool_output_bytes": 12288,
+      "max_measured_tokens": null,
+      "max_reference_cost": null
+    },
+    "balanced": {
+      "gate_policy": "balanced",
+      "auto_pass_stages": [
+        "implementer",
+        "docs"
+      ],
+      "mandatory_human_stages": [
+        "analyst",
+        "architect",
+        "reviewer",
+        "tester",
+        "verify_report"
+      ],
+      "max_uow_attempts": 3,
+      "max_parallel_workers": 2,
+      "stage_deadline_seconds": 600,
+      "max_tool_calls": 60,
+      "max_context_packet_bytes": 16384,
+      "max_tool_output_bytes": 12288,
+      "max_measured_tokens": null,
+      "max_reference_cost": null
+    }
+  }
+}

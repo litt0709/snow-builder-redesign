@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "provider": "gemini-pro-antigravity",
+  "currency": "USD",
+  "cost_basis": "public_api_price_list",
+  "note": "Cấu hình các model Gemini hỗ trợ trên gói Gemini Pro / Antigravity IDE. Mức giá dưới đây chỉ dùng để quy đổi tham khảo khi có số đo token thật; không phải hóa đơn gói thuê bao.",
+  "priority_order": [
+    "gemini-hydrogen",
+    "gemini-neon",
+    "gemini-carbon"
+  ],
+  "models": {
+    "gemini-hydrogen": {
+      "display_name": "Gemini Hydrogen",
+      "aliases": [
+        "hydrogen",
+        "gemini-4-hydrogen",
+        "gemini-flash-lite",
+        "gemini-2.5-flash-lite"
+      ],
+      "tier": "light",
+      "recommended_for": [
+        "orchestrator",
+        "docs-manager",
+        "writer"
+      ],
+      "quota_policy": "preferred_for_low_complexity",
+      "input": 0.15,
+      "cached_input": 0.0375,
+      "output": 0.6
+    },
+    "gemini-neon": {
+      "display_name": "Gemini Neon",
+      "aliases": [
+        "neon",
+        "gemini-4-neon",
+        "gemini-flash",
+        "gemini-2.5-flash"
+      ],
+      "tier": "standard",
+      "recommended_for": [
+        "analyst",
+        "implementer",
+        "tester",
+        "architect",
+        "reviewer"
+      ],
+      "quota_policy": "default_workhorse",
+      "input": 0.5,
+      "cached_input": 0.125,
+      "output": 3.0
+    },
+    "gemini-carbon": {
+      "display_name": "Gemini Carbon",
+      "aliases": [
+        "carbon",
+        "gemini-4-carbon",
+        "gemini-4-carbon-medium",
+        "gemini-pro",
+        "gemini-2.5-pro"
+      ],
+      "tier": "complex_restricted",
+      "recommended_for": [
+        "architect (high-complexity only)",
+        "reviewer (high-risk only)"
+      ],
+      "quota_policy": "restricted_fast_limit",
+      "input": 2.5,
+      "cached_input": 0.625,
+      "output": 15.0
+    }
+  }
+}

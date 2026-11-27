@@ -1,0 +1,11 @@
+# Local environment & volatile caches
+.env
+tmp/*
+!tmp/.gitkeep
+logs/*
+!logs/.gitkeep
+state/repomap.json
+state/scan_cache.json
+state/catalog_cache.json
+*.bak
+*.lock

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SpeedyFourLayerAudit",
+  "type": "object",
+  "required": [
+    "01-input-context.json",
+    "02-behavior-trace.json",
+    "03-verification-results.json",
+    "04-cost-time.json"
+  ]
+}

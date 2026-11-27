@@ -1,0 +1,554 @@
+{
+  "schema_version": 1,
+  "product": "Speedy DevKit",
+  "version": "2.0.0",
+  "generated_at": "2026-11-27T15:06:34Z",
+  "file_count": 109,
+  "files": {
+    ".agents/rules/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".agents/rules/00-core-invariants.md": {
+      "sha256": "7d6c8a9f8f10f1d42f26c0e46f17cc6bb7af99bea291a9d0e61cc86f1e846656",
+      "size": 975,
+      "ownership": "kit_owned"
+    },
+    ".agents/rules/10-session-context.md": {
+      "sha256": "dc5c551d614b53391016a54c09b13cd0c92a209416549b597e52a872b658c3f9",
+      "size": 704,
+      "ownership": "kit_owned"
+    },
+    ".agents/rules/20-docs-boundary.md": {
+      "sha256": "36327f9f12d93b36125f4f314f8f5a2421bdf951e2c9615340e07e150f2e3e65",
+      "size": 795,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-analyst/SKILL.md": {
+      "sha256": "e0edb4d20ff8f87df13775b0e5a3fbb6214b07638f6001986c5f4355947fdb73",
+      "size": 1006,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-audit-view/SKILL.md": {
+      "sha256": "4328c7edb2adbca0067b696e4147981fbc9a447e272c5968790ea3bbf53ef00c",
+      "size": 584,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-cleanup/SKILL.md": {
+      "sha256": "2f67b71df0a365f3d7a5c155f2e92545a7d7f03362bc3f832643d409f1ed5de3",
+      "size": 699,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-docs/SKILL.md": {
+      "sha256": "abbea81b048aa481900000266ea716cfb8ae41fc9598a2d7928bd071c0c37e22",
+      "size": 963,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-docs-view/SKILL.md": {
+      "sha256": "75f7ad8275825f111d9d244a897a0fa931465711b9cae06d50af4e1c33fc18ed",
+      "size": 688,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-flow/SKILL.md": {
+      "sha256": "97091e53dbaee2998ecf69c6f9b8b61288a5bd023626a4a0820496392b0e564a",
+      "size": 1337,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-refresh-rule/SKILL.md": {
+      "sha256": "e5e1697181f162465f3a93971c085879fa97661ce1e282ae9c35a019c2673aa5",
+      "size": 837,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-refresh-style/SKILL.md": {
+      "sha256": "9cf3541809b2d41c896ad2f93f60d74a3ae31d67b98aa247c803a7b81160ef84",
+      "size": 820,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-repomap/SKILL.md": {
+      "sha256": "1eff568d1584c507f754b9b0c8cac3806e33edc66e5f32b2efd44c90d5e46f6d",
+      "size": 621,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-specs/SKILL.md": {
+      "sha256": "22487aecc63619d35242182e410aa03a88902e9903556028139e18bd605c43dd",
+      "size": 1483,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/speedy-update/SKILL.md": {
+      "sha256": "d37945d8edfa04bc85838e69820762980026eeb57c8eb9df7c95227051dbe317",
+      "size": 824,
+      "ownership": "kit_owned"
+    },
+    ".speedy/VERSION": {
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624",
+      "size": 6,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/analyst.md": {
+      "sha256": "8f11dae833c48fa2475a030c74e9eb3283bf82bfeb394721ff6313278195304a",
+      "size": 1287,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/audit-lifecycle.md": {
+      "sha256": "94ba07977167c1420d1e3cd16d877a55ca431c88c9bed4d5e64ec7b1c88c7d24",
+      "size": 1297,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/audit-view.md": {
+      "sha256": "451cbdc12e7759ecb9da2faabec34bfb3c0a38a916adf10bb0fd239cb0982285",
+      "size": 1249,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/cleanup.md": {
+      "sha256": "ccaa59d677a2e5297adf5473f56c57a566fcbf4b307e2350f5bd47027b830864",
+      "size": 1555,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/docs-view.md": {
+      "sha256": "c2dd1ad03aad2dd5691d5d589a95818119131b22c9b443ccdfde86e46350f42f",
+      "size": 1378,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/docs.md": {
+      "sha256": "1023e8512cf0c374e012649d99d9c909d58ec3de675d1508cf62e126d18a3780",
+      "size": 1693,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/flow.md": {
+      "sha256": "2d002805b5af28d4bf7ac0625226009f0aaec141317ce650bed1eb6c037bcb99",
+      "size": 1582,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/hitl-template.md": {
+      "sha256": "bf9279d4c121e5259265e5acea1f0e2b73573f0707873ce78156f88dc37dc665",
+      "size": 1517,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/refresh-rule.md": {
+      "sha256": "1aa10b593d2417332e1182189a8c264af8aca0e26af3905c2edf38dbc87c437b",
+      "size": 1535,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/refresh-style.md": {
+      "sha256": "b7e862b96c32667df4328b1a3fda345cc3c70d23620e70877da39dd2a33f9b64",
+      "size": 1365,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/repomap.md": {
+      "sha256": "d9b68e43e595672e3730f7f9172333aad3729478834aef18ef88c1c2408ca540",
+      "size": 1163,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/specs.md": {
+      "sha256": "4e66efa01524ba702765dc19f5e4415424c38aeffcd5fa79e95358b5e26d18b9",
+      "size": 2956,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/update-speedy.md": {
+      "sha256": "955743a9db94c410f0c8ab155f883ad0dd8fa1f8d9b38bb92444057d14a778f4",
+      "size": 2050,
+      "ownership": "kit_owned"
+    },
+    ".speedy/config/antigravity-hooks.example.json": {
+      "sha256": "321b6b101ca38d38b89c77ef583b8cf18035ef6f7af23e6d4be3e3668d9f7de6",
+      "size": 516,
+      "ownership": "kit_owned"
+    },
+    ".speedy/config/model-pricing.json": {
+      "sha256": "dc554acef684ad75c74ec7a23e1990f1e416db186f42f8b67bc3051ee85770d2",
+      "size": 1879,
+      "ownership": "kit_owned"
+    },
+    ".speedy/config/policy.default.json": {
+      "sha256": "778495ccd8d5e4221280f09528726f675aa824633df6766d90917abb82869ef4",
+      "size": 2302,
+      "ownership": "kit_owned"
+    },
+    ".speedy/config/source.json": {
+      "sha256": "58b74391b1ee06c0b9907c3e6172777af2a8b3f70953fc527f02f6a1e55a1a67",
+      "size": 365,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/1.default/1.DESIGN_SYSTEM_AND_TOKENS.md": {
+      "sha256": "caca9c01037ed5c7f5d5f9c6c2d4b547869ae2f27f043cceae67a0e5838d4f6c",
+      "size": 5403,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/1.default/2.LAYOUT_AND_TEMPLATES.md": {
+      "sha256": "265657ef9171dd2096a1e789a6eda3269fc4d9972fa4930b56537b4e6fbbbbf7",
+      "size": 4541,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/1.default/preview-dark.png": {
+      "sha256": "f9bca0795a9493031fd652f32a400b8e11ac63e15a66600ed455bec05dbff201",
+      "size": 954032,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/1.default/preview-light.png": {
+      "sha256": "b2ff6e9916f5f5a6aba4c6af89692291bef86b198a107a5a19e62b6c787203e6",
+      "size": 1134104,
+      "ownership": "kit_owned"
+    },
+    ".speedy/docs/themes/README.md": {
+      "sha256": "f1ec4bfe7200b70f904c55f25e1f2e89ea24cc761a498437268513437b8fa82e",
+      "size": 1537,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/feature-flow.md": {
+      "sha256": "07b637d764989547dcc8c5a764ec0da1f7e8af4ba5d9b1ebb0b4929834408d10",
+      "size": 5835,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/fix-flow.md": {
+      "sha256": "3e7be9d7610b235f2afbd378894070f73094ae879c246459d0ade2520aa03105",
+      "size": 1761,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/flow.md": {
+      "sha256": "9540e8205b589ab6dac88418469807dbf1bc59ccc6b30f258de53d0fff940447",
+      "size": 4073,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/setup-flow.md": {
+      "sha256": "f1f611c70da78de28753b719fd6c3d74c12ba50cd2d66a57579c2ee9094d69b4",
+      "size": 2384,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/simple-flow.md": {
+      "sha256": "b3bd8f9952f0aabc1a89e5e7246869330af47c9020fc20a328a75b10ef48c7dd",
+      "size": 1888,
+      "ownership": "kit_owned"
+    },
+    ".speedy/flows/verify-flow.md": {
+      "sha256": "6cde0f3beb5a4de625e1876f8785b77299d01ee959f3230823bf237754f95535",
+      "size": 2321,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/analyst.md": {
+      "sha256": "7badab1ecf4b8f8eb738d96619ca22cff63b4048dae57153205b029da3de1296",
+      "size": 2677,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/architect.md": {
+      "sha256": "80c4f116cfe82d2ad2f5a1347a00498b0e831155e66c7fcc921282a0338d9225",
+      "size": 2719,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/docs-manager.md": {
+      "sha256": "f57790a5b30a8fe069fe28f533cf65c30a54bab889710507ae63a0601a8fff4b",
+      "size": 2259,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/implementer.md": {
+      "sha256": "8688dadc517cbdc931d5cce2fb910aa981ace7be26d402620ce3765eab11059b",
+      "size": 2402,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/orchestrator.md": {
+      "sha256": "1d0b4e41a530fc04f5b9bbc14f4298999b1454f17ee3dc197d7beaf6b858a728",
+      "size": 3339,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/reviewer.md": {
+      "sha256": "8909c2bbb658d8ba76967606e87284aaaabe042b9d15c8d88363bd3e2773957e",
+      "size": 2668,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/specs.md": {
+      "sha256": "e243745021dadff34728d5050666b5c9bfcda4c113387bb0942ed65708da93b5",
+      "size": 5290,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/tester.md": {
+      "sha256": "86ab96f8950a6cbe34b2abcf497125e068a96bc6e232d828aa7e7b7eb969ad57",
+      "size": 2630,
+      "ownership": "kit_owned"
+    },
+    ".speedy/roles/writer.md": {
+      "sha256": "bfaaf3cdc3128fd9d3846e6b9f9019334591d61dc980314c7f1ca23f0e3ab737",
+      "size": 2930,
+      "ownership": "kit_owned"
+    },
+    ".speedy/rules/1.principle.md": {
+      "sha256": "464b7cec1439551c22b63aa6766c09810216cdd8a31fc6fc7ba449fa314e981a",
+      "size": 1243,
+      "ownership": "kit_owned"
+    },
+    ".speedy/rules/2.framework.md": {
+      "sha256": "95abc0f52dae9e2d1438738e6d17692f67a58fae7b79c13639a74ebe9901eb2b",
+      "size": 1547,
+      "ownership": "kit_owned"
+    },
+    ".speedy/rules/3.orchestration-flow.md": {
+      "sha256": "1c8750ced1efc2680eb177da3611831afcbbd9ee6a8ba7c7ff98ded9675f20a9",
+      "size": 1487,
+      "ownership": "kit_owned"
+    },
+    ".speedy/rules/4.logs.md": {
+      "sha256": "9093114163c914328bff46ad7296c3b2b4129e3f3468f8fc386d7198d7d3d155",
+      "size": 692,
+      "ownership": "kit_owned"
+    },
+    ".speedy/rules/5.testing.md": {
+      "sha256": "6f96e064fa73e1a79898b16db4c13fdb5a915869059500062850f9eccfcc1292",
+      "size": 814,
+      "ownership": "kit_owned"
+    },
+    ".speedy/schemas/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".speedy/schemas/audit.schema.json": {
+      "sha256": "d31d8d6834802240075d71e920df28eba0ca1c0096e3e55785eb543de39a2e79",
+      "size": 259,
+      "ownership": "kit_owned"
+    },
+    ".speedy/schemas/context-packet.schema.json": {
+      "sha256": "d66bb68c0d2b7f5891c5f950bfdc49cb1598a8bc5599c1a28a380e9cf01aaad3",
+      "size": 456,
+      "ownership": "kit_owned"
+    },
+    ".speedy/schemas/handoff.schema.json": {
+      "sha256": "064d2a6b6fd05a609318898ff6b2df8d58cd52b511e8663c9ca2706a2fc8d2ed",
+      "size": 981,
+      "ownership": "kit_owned"
+    },
+    ".speedy/schemas/session-state.schema.json": {
+      "sha256": "f495855a7a4996de8b28315206ecb440df90edebd5f2070dcbe257dea8ff61be",
+      "size": 1459,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/adapters.py": {
+      "sha256": "cb41f9a3d38f56f606a03ea89dceb2ae235411d435340ff60ca4eb2eaa9924a6",
+      "size": 2890,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/audit.py": {
+      "sha256": "5794d31e2e14a8280d38fdf51f899289c0311652b8b8b0738bd849d44681340b",
+      "size": 19711,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/audit_viewer.py": {
+      "sha256": "1b22fb237f9c824015db0fcc40c3a044b9c508aa95e00aa9b23537ad7fdac90d",
+      "size": 10727,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/benchmark.py": {
+      "sha256": "2863523008628bf5a8f7527051b613e842eebc6cfc2d18a9dbfa176d85f876a4",
+      "size": 10626,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/catalog.py": {
+      "sha256": "2557273e3aa0dcddffe5f58b84fcdcda29257f989458070a5e249f6f71468955",
+      "size": 4627,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/cleanup.py": {
+      "sha256": "6b28602df512c3a00e51bf54f8180c2e6314f246aff88b81b8d1e4b76593bef2",
+      "size": 5082,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/context.py": {
+      "sha256": "1b9dc413e345ad7d8bd66f56466a8da801c5351d01f4bb29cd71872e5b99ab27",
+      "size": 21251,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/contracts.py": {
+      "sha256": "c86a2687adcfc0b3696441950718bc61ef87cc73dd629cce77578f4b81e12a93",
+      "size": 11377,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/docs_viewer.py": {
+      "sha256": "69e3c5e56423d5fef05732ea6661dcd62ccb85f931a3161f098b8b30d3276c37",
+      "size": 10735,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/handoff.py": {
+      "sha256": "73df3a5ea440ad131957b23a0dedefe79d64e826a4992846d161c934c1550665",
+      "size": 11943,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/hook_guard.py": {
+      "sha256": "d5fb749b0b67584b50fc9533aa0886c80e10a9db4446afd6fae596583f576ed2",
+      "size": 4517,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/installer_core.py": {
+      "sha256": "b1e16b0648554f3ddb440856766189118c92ce8535b7bd1d9ba94bbff4e0f065",
+      "size": 24490,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/lifecycle.py": {
+      "sha256": "a390f9cc1832836e8b576d9fa962080871e83d5051c59276e695bfe6b6613b8d",
+      "size": 39015,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/policy.py": {
+      "sha256": "55c4bd8801d3d6815cd6eedee649323abeb2feb708e50035e1a5794db9652231",
+      "size": 16934,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/repomap.py": {
+      "sha256": "b267d1292a88b8bc9b4153208c075fa09cc2003732b29fa989a43c2e084ef338",
+      "size": 8603,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/scaffold.py": {
+      "sha256": "87ee5c08713714599d2fc7b7ed2f7f5b9ddaed35c81ab0541578d7a1a236c136",
+      "size": 10843,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/scan.py": {
+      "sha256": "5fec9d58f8b97a48759f5e638fb2f57045a435705bdd8819951fe953354b5985",
+      "size": 7240,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/speedy_cli.py": {
+      "sha256": "f19e5e179f67ca630e2d0f5f8fef41b0c7372476eb116368f48cffca5294c41e",
+      "size": 31911,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/storage.py": {
+      "sha256": "406f00c9527838c0adcfe92dc1d7fdfad91a0346b2cbead646e3c8447f4ccedb",
+      "size": 15021,
+      "ownership": "kit_owned"
+    },
+    ".speedy/scripts/verification.py": {
+      "sha256": "aef1611c992c46d7b0fe46e50f513b2a515cbaf1aa3f177fd1bf279a26d059d5",
+      "size": 14893,
+      "ownership": "kit_owned"
+    },
+    "AGENTS.md": {
+      "sha256": "54decea37fa221fd7ddb8c9d2cfe401af9cc85527f1076d1ce1350c2ba61c169",
+      "size": 4451,
+      "ownership": "user_customizable"
+    },
+    "ai-workspace/.env.example": {
+      "sha256": "f957f030e96d29286452c396869ea45834a0e5150f1b6a128661d39b286288fd",
+      "size": 346,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/.gitignore": {
+      "sha256": "41abc91fb7aebfde0591906594fff5311c97738102cf0bfbd18a38d9926cf785",
+      "size": 164,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/README.md": {
+      "sha256": "c5a20657c6dff1b554ad377146047edecf44ac086932f54e6a1c9e0623527578",
+      "size": 1490,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/audit/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/architecture/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/cross-repo/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/cross-repo/README.md": {
+      "sha256": "7166e910647ea6ac529441440d2b0c3ec4db0f0236d22b9d52fc4c81a669d02a",
+      "size": 1017,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/cross-repo/registry.json": {
+      "sha256": "be11c980e092494e4e33cd7331959b085e2950c64baa88e465bfe69b039d9db5",
+      "size": 41,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/development-rules/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/development-rules/principles.md": {
+      "sha256": "89576097fe65214af420f9ad6dffdda72b66f0fd41b37eb1cd8720420a31c432",
+      "size": 1927,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/development-style/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/guides/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/docs/reference/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/logs/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/plans/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/reports/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/sessions/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/specs/.gitkeep": {
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "size": 1,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/state/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    },
+    "ai-workspace/tmp/.gitkeep": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0,
+      "ownership": "seed_once"
+    }
+  }
+}

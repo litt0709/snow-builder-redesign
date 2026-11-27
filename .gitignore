@@ -1,0 +1,33 @@
+# Python, Test & Coverage Caches (giữ nguyên mã nguồn tests/, chỉ bỏ file sinh tạm)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# OS & Editor Artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.bak
+*.lock
+
+# Local Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Builder Local Runtime & Build Outputs (dùng dấu / đầu dòng để KHÔNG ignore src/ai-workspace/*/.gitkeep)
+/sessions/
+/logs/
+/tmp/
+/dist/
+/build/
+/reports/*.json
+/reports/*.html
