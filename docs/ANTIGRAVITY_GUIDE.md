@@ -77,7 +77,7 @@ python3 scripts/package.py --out dist/speedy-v2.0.0
 ## 4. Sử Dụng Hàng Ngày, Resume, Cập Nhật & Phát Hành
 
 ### 4.1. Các Skill / Slash Command Chính Trong Dự Án Đích
-> *Tương thích Dual-Surface*: Mỗi lệnh đều có sẵn cả **Agent Skill** (`.agents/skills/<name>/SKILL.md` cho Antigravity App 2.0 / CLI) và **Thin Workflow** (`.agents/workflows/<name>.md` để hiện trực tiếp trong menu `/` của Antigravity IDE standalone).
+> *Không trùng lặp (Single Source of Truth)*: Toàn bộ slash commands được khai báo duy nhất qua **Agent Skills** (`.agents/skills/<name>/SKILL.md` với frontmatter single-line), không nhân bản thêm legacy `.agents/workflows/`.
 
 - Gọi `/flow`: Tự động phân loại `feature` / `fix` / `simple` / `verify`, khởi tạo session, nạp Context Packet gọn nhẹ và dừng xin duyệt ở từng cổng quan trọng.
 - Gọi `/specs`: Ghi nhận và cập nhật lặp lại tài liệu đặc tả thiết kế chuẩn 6 phần tại `ai-workspace/specs/`, dễ đọc cho cả Owner lẫn LLM ở các phiên sau.

@@ -120,12 +120,9 @@ class TestStep3RolesAndAntigravityAdapter(unittest.TestCase):
         builder_dirs = {p.name for p in (WORKSPACE_ROOT / ".agents" / "skills").iterdir() if p.is_dir()}
         self.assertEqual(speedy_dirs, expected_speedy_skills)
         self.assertEqual(builder_dirs, expected_builder_skills)
-
-        # Kiểm tra thin workflow wrappers (.agents/workflows/<name>.md) để slash command /<name> hiện trực tiếp trên Antigravity IDE
-        speedy_wfs = {p.stem for p in (SRC_ROOT / ".agents" / "workflows").glob("*.md")}
-        builder_wfs = {p.stem for p in (WORKSPACE_ROOT / ".agents" / "workflows").glob("*.md")}
-        self.assertEqual(speedy_wfs, expected_speedy_skills)
-        self.assertEqual(builder_wfs, expected_builder_skills)
+        # Không tạo duplicate legacy .agents/workflows/ song song với .agents/skills/
+        self.assertFalse((SRC_ROOT / ".agents" / "workflows").exists())
+        self.assertFalse((WORKSPACE_ROOT / ".agents" / "workflows").exists())
 
         banned = re.compile(r"copilot|vscode_askQuestions|\.vscode\b|\.github\b|commit-push|create-pr", re.IGNORECASE)
         for root_skills, expected in (

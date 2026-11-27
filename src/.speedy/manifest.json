@@ -2,8 +2,8 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T16:21:15Z",
-  "file_count": 128,
+  "generated_at": "2026-11-27T16:24:47Z",
+  "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -83,61 +83,6 @@
     ".agents/skills/update-speedy/SKILL.md": {
       "sha256": "0bd1530d324fb510ca4c6cfd94d38a91f1b493712cb1997cf5dcafe1d6c083f4",
       "size": 1849,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/analyst.md": {
-      "sha256": "731a7a831b9d54dd027990babd9a93db5c558e2736a208a430a9e808c2856632",
-      "size": 340,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/audit-view.md": {
-      "sha256": "90331bb9c9be65b0e6eb251a14be360e9253169d9a7255ae5645434e29e216b1",
-      "size": 285,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/cleanup.md": {
-      "sha256": "93aaf82a8d87e2b07cd36ce9327326da2ab8a551fbce7b45a4809a2558f82297",
-      "size": 312,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/docs-view.md": {
-      "sha256": "ba3143f0ac9f85659379f552e1a82142be894b250440ceb8a0ced2f04c75a164",
-      "size": 298,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/docs.md": {
-      "sha256": "c31d66725ffeec4a076a11768c3e375c8339bcd9044c14f46ab75b656c2a8194",
-      "size": 276,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/flow.md": {
-      "sha256": "4a3e8735d02ffb29ccb8057669fc1e50f6959dda7dd2fb21f40c3cf0415259c9",
-      "size": 406,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/refresh-rule.md": {
-      "sha256": "e9c473dec83a56fca88070a4a930daea50f90dde3580066a0c0410bd986f754c",
-      "size": 355,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/refresh-style.md": {
-      "sha256": "17bb9a7cc577fd69289e5b0715436fc4d8238b4c8086868ebe239cc590f27f7c",
-      "size": 358,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/repomap.md": {
-      "sha256": "2a6fe295861080e357f327d1f5b50e2ef9292fd186de6aa8832f30b658e01959",
-      "size": 293,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/specs.md": {
-      "sha256": "7c1926995de3f393dedcddb00992238ebb9058bb67f26d0b27cf99d28c827639",
-      "size": 421,
-      "ownership": "kit_owned"
-    },
-    ".agents/workflows/update-speedy.md": {
-      "sha256": "8e7f8aa8f0aa015248d1e8f393e5bb243e6bcb900807bb61034d72539c188994",
-      "size": 380,
       "ownership": "kit_owned"
     },
     ".speedy/VERSION": {

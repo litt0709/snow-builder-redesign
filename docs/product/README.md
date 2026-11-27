@@ -10,7 +10,7 @@
 |---|---|---|
 | `AGENTS.md` | Kit-owned (hỏi trước khi ghi đè nếu user đã sửa) | Entry-point định tuyến ngắn gọn và quy tắc chọn model Gemini |
 | `.agents/rules/` | Kit-owned | Rule `always_on` cực gọn và rule `model_decision` / `glob` cho Antigravity IDE |
-| `.agents/skills/` & `.agents/workflows/` | Kit-owned | 11 skill & slash command ngắn gọn (`/flow`, `/specs`, `/analyst`, `/docs`, `/docs-view`, `/audit-view`, `/refresh-rule`, `/refresh-style`, `/cleanup`, `/update-speedy`, `/repomap`) tương thích cả Antigravity App/CLI lẫn Antigravity IDE |
+| `.agents/skills/` | Kit-owned | 11 skill & slash command ngắn gọn (`/flow`, `/specs`, `/analyst`, `/docs`, `/docs-view`, `/audit-view`, `/refresh-rule`, `/refresh-style`, `/cleanup`, `/update-speedy`, `/repomap`) — nguồn duy nhất, không trùng lặp legacy workflows |
 | `.speedy/VERSION`, `.speedy/manifest.json` | Kit-owned | Phiên bản semver và danh mục SHA-256 kiểm soát xung đột cài đặt/cập nhật |
 | `.speedy/roles/` | Kit-owned | SSOT hợp đồng 8 vai trò (`orchestrator`, `analyst`, `architect`, `implementer`, `reviewer`, `tester`, `docs-manager`, `writer`) |
 | `.speedy/flows/` | Kit-owned | Quy trình 5 chế độ (`setup`, `feature`, `fix`, `simple`, `verify`) |

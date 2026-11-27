@@ -50,13 +50,9 @@ Policy engine (`policy.py` & `config/policy.default.json`) phân bổ model theo
 
 ---
 
-## 4. Tích Hợp Dual-Surface Cho Slash Commands (App / CLI & IDE Standalone)
+## 4. Hệ Thống Slash Commands Thống Nhất (`.agents/skills/` — Không Duplicate)
 
-| Bề mặt Antigravity | Cơ chế kích hoạt Slash Command `/` | Nguồn nội dung (SSOT) |
-|---|---|---|
-| **Antigravity App 2.0 & CLI (`agy`)** | Tự động chuyển `.agents/skills/<name>/SKILL.md` thành `/<name>` | `.agents/skills/<name>/SKILL.md` (single-line `description: "..."`) |
-| **Antigravity IDE Standalone** | Menu `/` đọc từ `.agents/workflows/<name>.md` | Thin wrapper 5 dòng trỏ về `../skills/<name>/SKILL.md` (tuân thủ DRY) |
-
+- Toàn bộ slash commands được khai báo duy nhất một nơi tại `.agents/skills/<name>/SKILL.md` (frontmatter YAML single-line chuẩn Antigravity), **không** tạo song song legacy `.agents/workflows/` để tránh hiện trùng lặp lệnh trong menu `/`.
 - **Speedy DevKit (11 lệnh ngắn gọn)**: `/flow`, `/specs`, `/analyst`, `/docs`, `/docs-view`, `/audit-view`, `/refresh-rule`, `/refresh-style`, `/cleanup`, `/repomap`, `/update-speedy`.
 - **SNOW Builder (10 lệnh quản trị)**: `/builder-flow`, `/builder-analyst`, `/builder-architect`, `/builder-implementer`, `/builder-reviewer`, `/builder-qa`, `/builder-autotest`, `/builder-docs-manager`, `/builder-writer`, `/builder-release`.
 
