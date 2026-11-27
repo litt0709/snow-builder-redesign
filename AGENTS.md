@@ -19,12 +19,14 @@
 
 | Nguyên tắc | Quy tắc thực thi |
 |---|---|
-| **Core (KISS, DRY, YAGNI, SOLID)** | Lõi nhỏ stdlib Python, hợp đồng role tập trung một nơi, chỉ tích hợp thuần Antigravity (`.agents/`). |
-| **Correctness-First** | Khi tốc độ/token xung đột với tính đúng đắn, luôn ưu tiên correctness. Không bỏ gate/test để lấy số đẹp. |
+| **User Primacy (Tối thượng)** | Mọi chỉ thị của User là ưu tiên số 1. Khi User còn băn khoăn/chưa chốt chi tiết, Agent đóng vai trò cố vấn chuyên môn: phân tích sắc bén, đa chiều và đề xuất giải pháp tối ưu. |
+| **Simple Responses & Clearly Direction** | Trả lời ngắn gọn, trực diện, khúc chiết bằng Tiếng Việt (giữ thuật ngữ kỹ thuật, CLI, path). Cấu trúc code/tài liệu tường minh, triệt tiêu phức tạp mơ hồ. |
+| **Core (SOLID, KISS, DRY, YAGNI)** | Lõi nhỏ stdlib Python, hợp đồng role tập trung một nơi, chỉ tích hợp thuần Antigravity (`.agents/`). |
+| **Data Consistency & SSOT** | Mọi số liệu/công thức/trạng thái dùng ở nhiều nơi BẮT BUỘC dùng chung một hàm nguồn duy nhất trong core; cấm phân mảnh logic hay hardcode ở từng view. |
+| **Correctness-First & Anti-Patterns** | Khi tốc độ/token xung đột với tính đúng đắn, luôn ưu tiên correctness. Tuân thủ 11 Anti-Patterns cần tránh tại `rules/1.principle.md`; không bỏ gate/test để lấy số đẹp. |
 | **Balanced AI-DD & Evidence-First** | Mặc định `balanced` (Smart HITL): ghi artifact → chạy `state complete` (tự validate & auto-pass stage rủi ro thấp không có câu hỏi mở) → chỉ dừng gọi `ask_question` khi có `Open questions`, `high_risk`, `REQUEST_CHANGES`, xung đột hoặc release (vẫn hỗ trợ `--policy strict`). Không báo "xong" khi chưa có verification evidence. |
 | **Lazy Load & Context Packet** | Index trước (`repomap`, `overview.md`) → tài liệu chi tiết sau → source liên quan cuối cùng. Không preload toàn bộ `rules/`, `docs/` hay `sessions/`. |
-| **Scope Discipline & Portable** | Chỉ sửa trong scope đã duyệt. Không hardcode đường dẫn máy cá nhân hay URL nội bộ. |
-| **Ngôn ngữ & Trình bày** | 100% Tiếng Việt rõ ràng (giữ thuật ngữ kỹ thuật, CLI command, JSON key, path). Ưu tiên bảng/list súc tích. |
+| **Scope Discipline, Generality & Portable** | Chỉ sửa trong scope đã duyệt; thiết kế tổng quát, không hardcode đường dẫn máy cá nhân hay URL nội bộ. |
 
 ### Thứ tự ưu tiên Model trên Antigravity (Tối ưu Quota & Hiệu năng)
 

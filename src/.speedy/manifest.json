@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T16:24:47Z",
+  "generated_at": "2026-11-27T16:34:47Z",
   "file_count": 117,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -331,28 +331,28 @@
       "ownership": "kit_owned"
     },
     ".speedy/rules/1.principle.md": {
-      "sha256": "464b7cec1439551c22b63aa6766c09810216cdd8a31fc6fc7ba449fa314e981a",
-      "size": 1243,
+      "sha256": "d945003ca5a09b21d66f1918c8cae9ea905005a0b8f4f7a0d4a4ebd1b3871606",
+      "size": 6912,
       "ownership": "kit_owned"
     },
     ".speedy/rules/2.framework.md": {
-      "sha256": "95abc0f52dae9e2d1438738e6d17692f67a58fae7b79c13639a74ebe9901eb2b",
-      "size": 1547,
+      "sha256": "f9b7603abee731de926b2e1ed646a788d2ccd589aa1a319f33b297db227f1c17",
+      "size": 3930,
       "ownership": "kit_owned"
     },
     ".speedy/rules/3.orchestration-flow.md": {
-      "sha256": "1c8750ced1efc2680eb177da3611831afcbbd9ee6a8ba7c7ff98ded9675f20a9",
-      "size": 1487,
+      "sha256": "7d6f9151dddc32188dfc5885d46b3771bb0283c2bf1dfb69097d12b1f13c41d7",
+      "size": 4417,
       "ownership": "kit_owned"
     },
     ".speedy/rules/4.logs.md": {
-      "sha256": "9093114163c914328bff46ad7296c3b2b4129e3f3468f8fc386d7198d7d3d155",
-      "size": 692,
+      "sha256": "e33330c3a122182b0485f4794f7c60f052466889f05c3c66fc4569294eff2b2f",
+      "size": 2122,
       "ownership": "kit_owned"
     },
     ".speedy/rules/5.testing.md": {
-      "sha256": "6f96e064fa73e1a79898b16db4c13fdb5a915869059500062850f9eccfcc1292",
-      "size": 814,
+      "sha256": "9e4902ab599e555971f80eecda65ce4804bc668717e0f2d63bf0f374d0a8cb7f",
+      "size": 2489,
       "ownership": "kit_owned"
     },
     ".speedy/schemas/.gitkeep": {
@@ -486,8 +486,8 @@
       "ownership": "kit_owned"
     },
     "AGENTS.md": {
-      "sha256": "15a92a2148dfe730ddf3e21966a2f6fddcbdbf4078c7b625b771edc70bdaade8",
-      "size": 4587,
+      "sha256": "34f217d8fd347343c80708a20f095d2aa065343b888217e2c169254c6817b868",
+      "size": 6244,
       "ownership": "user_customizable"
     },
     "ai-workspace/.env.example": {
