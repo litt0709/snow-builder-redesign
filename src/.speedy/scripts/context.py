@@ -38,6 +38,67 @@ _SOURCE_REF_LINE_RE = re.compile(
     r"^\s*[-*]\s*`?source_ref`?\s*:\s*`?([^|`\n]+)`?\s*\|\s*`?sha256`?\s*:\s*`?([a-fA-F0-9]{8,64})`?",
     re.MULTILINE,
 )
+_ACTIVE_SPEC_RE = re.compile(
+    r"Active\s+Spec[^:\n]*:\s*`?([^\s`|\n()\[\]]+\.md)`?",
+    re.IGNORECASE,
+)
+
+
+def _discover_active_spec_refs(layout: WorkspaceLayout) -> List[Dict[str, Any]]:
+    """Tìm SSOT `specs/INDEX.md` và file `Active Spec` hiện tại để nạp gọn cho Analyst/Architect."""
+    specs_dir = layout.runtime_root / "specs"
+    if not specs_dir.is_dir():
+        return []
+
+    refs: List[Dict[str, Any]] = []
+    index_path = specs_dir / "INDEX.md"
+    if index_path.is_file():
+        idx_text = index_path.read_text(encoding="utf-8", errors="replace")
+        refs.append(
+            {
+                "kind": "spec_index",
+                "path": index_path.relative_to(layout.root).as_posix(),
+                "semantic_checksum": semantic_checksum(idx_text)[:16],
+                "reason": "Mục lục các Phase/Version spec và con trỏ Active Spec hiện tại.",
+            }
+        )
+        m = _ACTIVE_SPEC_RE.search(idx_text)
+        if m:
+            candidate_name = m.group(1).strip()
+            try:
+                active_path = resolve_within_scope(specs_dir, candidate_name)
+            except SpeedyError:
+                active_path = None
+            if active_path and active_path.is_file():
+                active_txt = active_path.read_text(encoding="utf-8", errors="replace")
+                refs.append(
+                    {
+                        "kind": "active_spec",
+                        "path": active_path.relative_to(layout.root).as_posix(),
+                        "semantic_checksum": semantic_checksum(active_txt)[:16],
+                        "reason": "Đặc tả thiết kế đang hoạt động (Active Phase/Version) — nguồn yêu cầu chính.",
+                    }
+                )
+        return refs
+
+    # Fallback cho dự án chưa có INDEX.md: chỉ lấy tối đa 1 file spec mới cập nhật nhất
+    md_files = sorted(
+        (p for p in specs_dir.glob("*.md") if not p.name.startswith(".")),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if md_files:
+        latest = md_files[0]
+        latest_txt = latest.read_text(encoding="utf-8", errors="replace")
+        refs.append(
+            {
+                "kind": "active_spec",
+                "path": latest.relative_to(layout.root).as_posix(),
+                "semantic_checksum": semantic_checksum(latest_txt)[:16],
+                "reason": "Đặc tả thiết kế mới nhất trong specs/ (chưa có INDEX.md).",
+            }
+        )
+    return refs
 
 
 def query_cross_repo_registry(layout: WorkspaceLayout, keyword: str) -> Dict[str, Any]:
@@ -437,6 +498,9 @@ def prepare_context_packet(
             )
             if needed_st == "implementer" and stage_id in {"reviewer", "tester"}:
                 input_refs.extend(_extract_modified_code_refs(layout, txt))
+
+    if stage_id in {"analyst", "architect"}:
+        input_refs.extend(_discover_active_spec_refs(layout))
 
     overview_doc = layout.docs_dir / "architecture" / "overview.md"
     if overview_doc.is_file():

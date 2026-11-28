@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-27T19:15:01Z",
+  "generated_at": "2026-11-28T01:26:13Z",
   "file_count": 121,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -76,8 +76,8 @@
       "ownership": "kit_owned"
     },
     ".agents/skills/specs/SKILL.md": {
-      "sha256": "c89555684985528f09664bc1080cc02383139a95d42853651232e8210f036597",
-      "size": 1473,
+      "sha256": "855314679ed23037416a0ee48df2afff0a6a590b286d1616b314aab23269a855",
+      "size": 1863,
       "ownership": "kit_owned"
     },
     ".agents/skills/update-speedy/SKILL.md": {
@@ -151,8 +151,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/specs.md": {
-      "sha256": "5205a8f3e085a991ae722889532f85762ebc76103e6a48b7edebed3b494f0235",
-      "size": 2939,
+      "sha256": "926d76758f73d58ecb0a371ce5d1b09242f72abcd14e3659510168c704911054",
+      "size": 4783,
       "ownership": "kit_owned"
     },
     ".speedy/commands/update-speedy.md": {
@@ -336,8 +336,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/specs.md": {
-      "sha256": "c7dd0df5ed59c8e40ad8a0b72d80987e375bffc016e72abed03a8b51aa93626a",
-      "size": 5273,
+      "sha256": "5933411c08193e1b74a8a9298381a9b4b952e73c260d6ebcc4be7ae58ac32f3e",
+      "size": 5454,
       "ownership": "kit_owned"
     },
     ".speedy/roles/tester.md": {
@@ -436,8 +436,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/context.py": {
-      "sha256": "29c4326f2b6e395a345c9793daf8ca361bb52320f49b305d17021dc728bd740c",
-      "size": 22844,
+      "sha256": "ae3f9e6f004480905fbd76bd96a71c8e37261e3c458cb3b4bdc3c195721fbe95",
+      "size": 25501,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/contracts.py": {
