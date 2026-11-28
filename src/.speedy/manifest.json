@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-28T01:26:13Z",
+  "generated_at": "2026-11-28T01:50:00Z",
   "file_count": 121,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -121,8 +121,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/docs.md": {
-      "sha256": "4cc3b20ebf404292c547f4dd60e6987aa102e6f32147cb2af98a81d52b3ef5c7",
-      "size": 1677,
+      "sha256": "28cc357efa0bda9124926fc9024fe981d3bd7caf8ca8ba27fe3006c8c70feb70",
+      "size": 2177,
       "ownership": "kit_owned"
     },
     ".speedy/commands/flow.md": {
@@ -146,8 +146,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/commands/repomap.md": {
-      "sha256": "3157531d60e7cd6f7736f58414e0808b131aa8754c3f1c680adb13f3c9062841",
-      "size": 1144,
+      "sha256": "7a6a347cb66fbbaac293dcf07d996ee1b06db436087dcd914e473b6f36294e36",
+      "size": 1677,
       "ownership": "kit_owned"
     },
     ".speedy/commands/specs.md": {
@@ -271,8 +271,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/flows/feature-flow.md": {
-      "sha256": "3ebbb86df31bb114f523a810c079c08f5ef69b25210feb02c19528a55e200e77",
-      "size": 6726,
+      "sha256": "1dd87c4a2ed6f3c10dadc475636fa6674a13e6d4c72ae936f57deb2c61b40c8b",
+      "size": 6740,
       "ownership": "kit_owned"
     },
     ".speedy/flows/fix-flow.md": {
@@ -316,8 +316,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/roles/docs-manager.md": {
-      "sha256": "be945b0ad0d49aa35b478b5d969eed55fa1aa3222f1a0a7b6689015b4902d867",
-      "size": 3851,
+      "sha256": "b0ed89ef778d31757ab3aaf829eff4fd670d27a02ea9d8f21f01a4de5cf03e9e",
+      "size": 4192,
       "ownership": "kit_owned"
     },
     ".speedy/roles/implementer.md": {
@@ -436,8 +436,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/context.py": {
-      "sha256": "ae3f9e6f004480905fbd76bd96a71c8e37261e3c458cb3b4bdc3c195721fbe95",
-      "size": 25501,
+      "sha256": "f2d5e1e9a2f08a108ab49a2377892a4ca3f6bd6240e6e8cd0aacd81672e5c88b",
+      "size": 26873,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/contracts.py": {
@@ -466,8 +466,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/lifecycle.py": {
-      "sha256": "40528a7408595fc853dc89edce554801475161b4d2dc72fcdc5aaf3d9847296e",
-      "size": 41445,
+      "sha256": "1a21f87bb13f1746813e1a69ca9f89020366d9d5fef4b08fde0f3c8bff5943d2",
+      "size": 42217,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/policy.py": {
@@ -476,8 +476,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/repomap.py": {
-      "sha256": "b267d1292a88b8bc9b4153208c075fa09cc2003732b29fa989a43c2e084ef338",
-      "size": 8603,
+      "sha256": "a47bbf8fcd907b60ed89a04c4f662fc79531b22c7cb2c7af9c561560408936c2",
+      "size": 24981,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/scaffold.py": {
@@ -491,8 +491,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/speedy_cli.py": {
-      "sha256": "da94248b5cfc087bc902a897a4daef106a8f382b3824319a7e973a3d2edcb371",
-      "size": 33125,
+      "sha256": "1159f9fe8f1fabecab2081a3085b1d403fa310c2b4ba65e29aa868bd2ffcdc31",
+      "size": 34108,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/storage.py": {

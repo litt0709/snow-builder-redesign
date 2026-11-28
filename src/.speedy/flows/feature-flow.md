@@ -50,11 +50,10 @@ python3 -B .speedy/scripts/speedy_cli.py state complete --sid <sid> --stage <sta
 
 ## Bước 6 — Docs Manager & Knowledge Sync (`Gemini Hydrogen`)
 1. Đọc `.speedy/roles/docs-manager.md` + `handoff-2-architect.md` + `handoff-3-implementer.md`.
-2. Đảm bảo **Bộ Knowledge Base Lớp 2** trong `ai-workspace/docs/` đầy đủ cho các phiên chạy sau (tạo mới nếu chưa có, cập nhật phần thay đổi nếu đã có):
-   - `ai-workspace/docs/architecture/overview.md` (Index nhẹ + link tới tài liệu chi tiết)
-   - `ai-workspace/docs/architecture/architecture.md` (**Bắt buộc**: Tech Stack, sơ đồ Mermaid luồng dữ liệu, Data Model/Schema, API Contracts & các quyết định ADR)
-   - `ai-workspace/docs/architecture/<module>.md` (nếu thêm/đổi module lớn, kèm `source_ref`), `ai-workspace/docs/guides/quickstart.md` (lần đầu hoặc khi đổi lệnh chạy) và `ai-workspace/docs/CHANGELOG.md`.
-3. Chạy `python3 -B .speedy/scripts/speedy_cli.py repomap build` để làm mới chỉ mục mã nguồn cho các phiên sau.
+2. Đảm bảo **Bộ Knowledge Base 4 Trụ Cột** trong `ai-workspace/docs/` gọn nhẹ và đầy đủ cho các phiên chạy sau (tạo mới nếu chưa có, cập nhật phần thay đổi nếu đã có):
+   - `ai-workspace/docs/architecture/architecture.md` (**Bắt buộc**: Tech Stack, sơ đồ Mermaid luồng dữ liệu, Data Model/Schema, API Contracts & bảng ADR)
+   - `ai-workspace/docs/architecture/<domain>.md` (Domain Card <= 150 dòng/file cho module/domain lớn vừa thêm/đổi, kèm `tags:` và `source_ref`), `ai-workspace/docs/guides/quickstart.md` (lần đầu hoặc khi đổi lệnh chạy) và `ai-workspace/docs/CHANGELOG.md`.
+3. Chạy `python3 -B .speedy/scripts/speedy_cli.py knowledge index` để đồng bộ Unified Harness Index (`repomap.json`) và tự sinh Master Map `ai-workspace/docs/INDEX.md`.
 4. Ghi `ai-workspace/sessions/<sid>/handoff-6-docs.md` → chạy `state complete --sid <sid> --stage docs`.
 
 ## Bước 7 — Wrap-up & Báo Cáo Trung Thực (`Gemini Hydrogen`)

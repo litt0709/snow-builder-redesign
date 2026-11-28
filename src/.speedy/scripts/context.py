@@ -502,6 +502,17 @@ def prepare_context_packet(
     if stage_id in {"analyst", "architect"}:
         input_refs.extend(_discover_active_spec_refs(layout))
 
+    master_index = layout.docs_dir / "INDEX.md"
+    if master_index.is_file():
+        input_refs.append(
+            {
+                "kind": "knowledge_master_index",
+                "path": master_index.relative_to(layout.root).as_posix(),
+                "semantic_checksum": semantic_checksum(master_index.read_text(encoding="utf-8", errors="replace"))[:16],
+                "reason": "Master Knowledge Map (auto-synced) — đọc đầu tiên để thấy toàn bộ docs & module map.",
+            }
+        )
+
     overview_doc = layout.docs_dir / "architecture" / "overview.md"
     if overview_doc.is_file():
         input_refs.append(
@@ -549,6 +560,19 @@ def prepare_context_packet(
                 )
 
     repomap_res = query_repomap(layout, search_kw, limit=5)
+    doc_matches = repomap_res.get("doc_matches", [])[:3]
+    existing_ref_paths = {r.get("path") for r in input_refs}
+    for dmatch in doc_matches[:2]:
+        dpath = dmatch.get("path")
+        if dpath and dpath not in existing_ref_paths:
+            existing_ref_paths.add(dpath)
+            input_refs.append(
+                {
+                    "kind": "matched_domain_doc",
+                    "path": dpath,
+                    "reason": f"Tài liệu khớp từ khóa tác vụ: {dmatch.get('title')}",
+                }
+            )
     cross_repo_res = query_cross_repo_registry(layout, search_kw)
 
     failure_history = state.get("failure_history", [])
@@ -580,6 +604,7 @@ def prepare_context_packet(
         "invariants": CORE_INVARIANTS,
         "approved_decisions": approved_decisions,
         "repomap_matches": repomap_res.get("matches", []),
+        "doc_matches": doc_matches,
         "cross_repo_matches": cross_repo_res.get("matches", []),
         "input_refs": input_refs,
         "open_assumptions": open_assumptions,
@@ -612,6 +637,10 @@ def prepare_context_packet(
     encoded = json.dumps(packet, ensure_ascii=False).encode("utf-8")
     if len(encoded) > max_packet_bytes and packet["repomap_matches"]:
         packet["repomap_matches"] = packet["repomap_matches"][:2]
+        packet["context_budget"]["truncated_optional_refs"] = True
+        encoded = json.dumps(packet, ensure_ascii=False).encode("utf-8")
+    if len(encoded) > max_packet_bytes and packet.get("doc_matches"):
+        packet["doc_matches"] = packet["doc_matches"][:1]
         packet["context_budget"]["truncated_optional_refs"] = True
         encoded = json.dumps(packet, ensure_ascii=False).encode("utf-8")
 

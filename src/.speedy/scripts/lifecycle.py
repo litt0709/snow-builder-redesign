@@ -610,6 +610,21 @@ def transition_stage(
     return result_summary
 
 
+def _refresh_docs_harness(layout: WorkspaceLayout, result: Dict[str, Any]) -> None:
+    try:
+        from repomap import build_repomap, generate_docs_index_md
+
+        if layout.docs_dir.is_dir() and any(layout.docs_dir.rglob("*.md")):
+            idx_res = generate_docs_index_md(layout)
+            result["knowledge_index_synced"] = idx_res["index_md_path"]
+        else:
+            build_repomap(layout, use_cache=True)
+        result["repomap_refreshed"] = True
+    except Exception as exc:
+        result["repomap_refreshed"] = False
+        result["repomap_refresh_error"] = str(exc)
+
+
 def complete_stage(
     layout: WorkspaceLayout,
     *,
@@ -634,6 +649,8 @@ def complete_stage(
         res = transition_stage(layout, sid=sid, stage=stage_id, target_status=StageStatus.APPROVED.value)
         res["requires_human_approval"] = False
         res["auto_passed"] = True
+        if stage_id == "docs":
+            _refresh_docs_harness(layout, res)
         return res
     except SpeedyError as err:
         if err.code != ErrorCode.GATE_REQUIRED:
@@ -811,6 +828,8 @@ def record_gate_decision(
     outcome["sid"] = sid
     outcome["state_revision"] = updated["state_revision"]
     outcome["next_action"] = updated["next_action"]
+    if decision == "approve" and stage_id == "docs":
+        _refresh_docs_harness(layout, outcome)
     return outcome
 
 

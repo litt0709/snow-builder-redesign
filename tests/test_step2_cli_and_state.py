@@ -509,6 +509,103 @@ class TestStep2CliAndStateMachine(unittest.TestCase):
             self.assertFalse((ws / "ai-workspace" / "tmp" / "scratch.txt").exists())
             self.assertTrue((ws / "ai-workspace" / "sessions" / sid / "state.json").exists())
 
+    def test_unified_harness_repomap_knowledge_index_and_context_injection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = _make_temp_product_workspace(tmp)
+            # Tạo cấu trúc dự án thực tế 2 cấp: functions/src/subsonic + web/src/pages
+            sub_dir = ws / "functions" / "src" / "subsonic"
+            sub_dir.mkdir(parents=True, exist_ok=True)
+            (sub_dir / "opensubsonic.ts").write_text(
+                "export function handleOpenSubsonicStream(id: string) { return id; }\n"
+                "export class CatalogSnapshotBuilder {}\n",
+                encoding="utf-8",
+            )
+            web_pages = ws / "web" / "src" / "pages"
+            web_pages.mkdir(parents=True, exist_ok=True)
+            (web_pages / "BooksPage.tsx").write_text(
+                "export function BooksPage() { return null; }\n",
+                encoding="utf-8",
+            )
+            # Tạo Active Spec + Domain Doc
+            specs_dir = ws / "ai-workspace" / "specs"
+            specs_dir.mkdir(parents=True, exist_ok=True)
+            (specs_dir / "01-v1-audio.md").write_text("# Audio System v1\n", encoding="utf-8")
+            (specs_dir / "INDEX.md").write_text(
+                "# Specs Index\n- **Active Spec**: `01-v1-audio.md`\n",
+                encoding="utf-8",
+            )
+            (ws / "ai-workspace" / "docs" / "architecture" / "opensubsonic-api.md").write_text(
+                "# OpenSubsonic Streaming API\n\nTags: opensubsonic, stream, redirect, catalog\n\n"
+                "## Zero-Egress 302 Redirect\nStream audio directly from Drive.\n",
+                encoding="utf-8",
+            )
+
+            # 1. Chạy knowledge index -> sinh docs/INDEX.md (< 80 dòng) + idempotent + repomap.json v2
+            idx_res = json.loads(_run_cli(ws, "knowledge", "index").stdout)
+            self.assertEqual(idx_res["status"], "created")
+            index_md_path = ws / "ai-workspace" / "docs" / "INDEX.md"
+            self.assertTrue(index_md_path.is_file())
+            self.assertLess(len(index_md_path.read_text(encoding="utf-8").splitlines()), 80)
+            self.assertGreaterEqual(idx_res["modules_count"], 2)
+            self.assertGreaterEqual(idx_res["docs_count"], 1)
+            idx_res2 = json.loads(_run_cli(ws, "knowledge", "index").stdout)
+            self.assertEqual(idx_res2["status"], "unchanged")
+
+            # 2. Kiểm tra cache hit và cache invalidation khi sửa nội dung file code (AC-001)
+            rm_cached = json.loads(_run_cli(ws, "repomap", "build").stdout)
+            self.assertTrue(rm_cached["cached"])
+            (sub_dir / "opensubsonic.ts").write_text(
+                "export function handleOpenSubsonicStream(id: string) { return id; }\n"
+                "export class CatalogSnapshotBuilder {}\n"
+                "export function buildDriveRedirectUrl(id: string) { return id; }\n",
+                encoding="utf-8",
+            )
+            rm_fresh = json.loads(_run_cli(ws, "repomap", "build").stdout)
+            self.assertFalse(rm_fresh["cached"])
+
+            # 3. Chạy knowledge query -> khớp cả symbol mới thêm lẫn domain doc (AC-002)
+            q_res = json.loads(_run_cli(ws, "knowledge", "query", "opensubsonic").stdout)
+            self.assertTrue(
+                any(m["path"] == "functions/src/subsonic" and "handleOpenSubsonicStream" in m["matched_symbols"] for m in q_res["code_matches"]),
+                q_res,
+            )
+            self.assertTrue(
+                any(d["path"].endswith("opensubsonic-api.md") for d in q_res["doc_matches"]),
+                q_res,
+            )
+            q_new_sym = json.loads(_run_cli(ws, "knowledge", "query", "DriveRedirect").stdout)
+            self.assertTrue(
+                any("buildDriveRedirectUrl" in m["matched_symbols"] for m in q_new_sym["code_matches"]),
+                q_new_sym,
+            )
+
+            # 4. Context prepare tự nạp INDEX.md + active_spec + doc_matches (AC-004)
+            s_out = json.loads(_run_cli(ws, "session", "new", "--slug", "subsonic-fix", "--goal", "Fix opensubsonic stream").stdout)
+            pkt = json.loads(_run_cli(ws, "context", "prepare", "--sid", s_out["sid"], "--stage", "analyst", "--query", "opensubsonic").stdout)
+            ref_kinds = {r["kind"] for r in pkt["input_refs"]}
+            self.assertIn("spec_index", ref_kinds)
+            self.assertIn("active_spec", ref_kinds)
+            self.assertIn("knowledge_master_index", ref_kinds)
+            self.assertTrue(any(d["path"].endswith("opensubsonic-api.md") for d in pkt["doc_matches"]))
+
+            # 5. AC-005: hoàn tất stage docs tự động refresh repomap & knowledge index
+            state_path = ws / "ai-workspace" / "sessions" / s_out["sid"] / "state.json"
+            st = json.loads(state_path.read_text(encoding="utf-8"))
+            for prev in ("bootstrap", "root_cause", "analyst", "architect", "implementer", "reviewer", "tester"):
+                if prev in st["stages"]:
+                    st["stages"][prev]["status"] = "approved"
+            st["current_stage"] = "docs"
+            state_path.write_text(json.dumps(st), encoding="utf-8")
+            (ws / "ai-workspace" / "sessions" / s_out["sid"] / "handoff-6-docs.md").write_text(
+                f"# Docs Sync\n\n## Summary\nĐã đồng bộ docs.\n\n## Scope\n- ai-workspace/docs/INDEX.md\n\n"
+                f"## Risks\nKhông.\n\n## Dependencies\nKhông.\n\n## Open questions\nKhông.\n\n"
+                f"## Resume Metadata\n```json\n{{\"sid\":\"{s_out['sid']}\",\"stage\":\"docs\",\"revision\":1,\"input_refs\":[],\"next_action\":\"wrapup\",\"verification_refs\":[]}}\n```\n",
+                encoding="utf-8",
+            )
+            docs_cmp = json.loads(_run_cli(ws, "state", "complete", "--sid", s_out["sid"], "--stage", "docs").stdout)
+            self.assertTrue(docs_cmp.get("repomap_refreshed"))
+            self.assertEqual(docs_cmp.get("knowledge_index_synced"), "ai-workspace/docs/INDEX.md")
+
 
 if __name__ == "__main__":
     unittest.main()

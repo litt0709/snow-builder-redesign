@@ -281,6 +281,22 @@ def _handle_knowledge(layout, args: argparse.Namespace) -> int:
     )
 
     action = args.knowledge_action
+    if action == "index":
+        from repomap import generate_docs_index_md
+
+        return _emit_ok(generate_docs_index_md(layout, root_dir=getattr(args, "root", ".") or "."))
+    if action == "query":
+        from repomap import query_repomap
+
+        res = query_repomap(layout, " ".join(args.query), limit=args.limit)
+        return _emit_ok(
+            {
+                "query": res["query"],
+                "doc_matches": res["doc_matches"],
+                "code_matches": res["matches"],
+                "hint": res["hint"],
+            }
+        )
     if action == "check-freshness":
         return _emit_ok(check_docs_freshness(layout))
     if action == "stamp-ref":
@@ -322,7 +338,7 @@ def _handle_knowledge(layout, args: argparse.Namespace) -> int:
         )
     raise SpeedyError(
         ErrorCode.INVALID_INPUT,
-        "Subcommand của knowledge phải là: check-freshness | stamp-ref | cross-repo | register-cross-repo | propose-lesson | promote-lesson.",
+        "Subcommand của knowledge phải là: index | query | check-freshness | stamp-ref | cross-repo | register-cross-repo | propose-lesson | promote-lesson.",
     )
 
 
@@ -642,8 +658,13 @@ def build_parser() -> argparse.ArgumentParser:
     ctx_cmp = ctx_sub.add_parser("compact")
     ctx_cmp.add_argument("--sid", required=True)
 
-    p_kn = sub.add_parser("knowledge", help="Quản lý độ tươi mới tài liệu, Cross-Repo & Lessons Learned")
+    p_kn = sub.add_parser("knowledge", help="Quản lý Unified Harness Index, độ tươi mới tài liệu, Cross-Repo & Lessons Learned")
     kn_sub = p_kn.add_subparsers(dest="knowledge_action")
+    kn_idx = kn_sub.add_parser("index", help="Đồng bộ repomap.json và tự sinh Master Map docs/INDEX.md")
+    kn_idx.add_argument("--root", default=".")
+    kn_q = kn_sub.add_parser("query", help="Truy vấn hợp nhất tài liệu (WHAT) & mã nguồn (WHERE) theo từ khóa")
+    kn_q.add_argument("query", nargs="+")
+    kn_q.add_argument("--limit", type=int, default=5)
     kn_sub.add_parser("check-freshness", help="Kiểm tra các tài liệu bị cũ so với mã nguồn")
     kn_stamp = kn_sub.add_parser("stamp-ref", help="Sinh dòng source_ref kèm sha256 cho tài liệu")
     kn_stamp.add_argument("--source", required=True)
