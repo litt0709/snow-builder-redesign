@@ -30,6 +30,21 @@ AUDIT_FILENAMES = (
     "03-verification-results.json",
     "04-cost-time.json",
 )
+REVIEW_FILENAME = "05-optimization-review.json"
+
+STAGE_PROMPT_REFS: Dict[str, str] = {
+    "bootstrap": ".speedy/flows/flow.md",
+    "root_cause": ".speedy/flows/fix-flow.md",
+    "analyst": ".speedy/roles/analyst.md",
+    "architect": ".speedy/roles/architect.md",
+    "implementer": ".speedy/roles/implementer.md",
+    "reviewer": ".speedy/roles/reviewer.md",
+    "tester": ".speedy/roles/tester.md",
+    "docs": ".speedy/roles/docs-manager.md",
+    "verify_report": ".speedy/flows/verify-flow.md",
+    "wrapup": ".speedy/flows/feature-flow.md",
+    "audit": ".speedy/roles/audit.md",
+}
 
 MISSING_USAGE_METRICS = [
     "input_tokens",
@@ -53,6 +68,7 @@ _METRIC_ALLOW_KEYS = frozenset(MISSING_USAGE_METRICS) | {
     "max_tokens",
     "max_measured_tokens",
     "known_tokens",
+    "token_reduction_pct",
 }
 
 
@@ -372,6 +388,91 @@ def collect_antigravity_transcript_usage(
     return list(by_model.values()) if by_model else None
 
 
+def collect_antigravity_prompt_trace(
+    *,
+    sid: str,
+    started_at: Optional[str],
+    ended_at: Optional[str] = None,
+    brain_dir: Optional[Path] = None,
+    max_items: int = 10,
+) -> List[str]:
+    """
+    Trích xuất tối đa `max_items` lệnh/prompt của User (đã sanitize secret) trong khung giờ phiên
+    từ `transcript.jsonl` của Antigravity IDE để phục vụ `/audit` review cách viết command.
+    """
+    if not sid:
+        return []
+    env_dir = os.environ.get("ANTIGRAVITY_BRAIN_DIR")
+    root_brain = brain_dir or (Path(env_dir).expanduser() if env_dir else (Path.home() / ".gemini" / "antigravity" / "brain"))
+    if not root_brain.is_dir():
+        return []
+
+    start_ms = _parse_iso_ms(started_at)
+    end_ms = _parse_iso_ms(ended_at) if ended_at else None
+    min_mtime_s = (start_ms / 1000.0 - 120.0) if start_ms is not None else 0.0
+
+    matched_transcript: Optional[Path] = None
+    try:
+        candidates = sorted(
+            root_brain.glob("*/.system_generated/logs/transcript.jsonl"),
+            key=lambda p: p.stat().st_mtime if p.is_file() else 0.0,
+            reverse=True,
+        )
+    except OSError:
+        return []
+
+    for cand in candidates[:40]:
+        try:
+            if not cand.is_file():
+                continue
+            if start_ms is not None and cand.stat().st_mtime < min_mtime_s:
+                continue
+            if sid in cand.read_text(encoding="utf-8", errors="ignore"):
+                matched_transcript = cand
+                break
+        except OSError:
+            continue
+
+    if matched_transcript is None:
+        return []
+
+    import json
+
+    window_start = (start_ms - 60_000) if start_ms is not None else None
+    window_end = (end_ms + 15_000) if end_ms is not None else None
+    prompts: List[str] = []
+    seen = set()
+
+    try:
+        for line in matched_transcript.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if "USER_INPUT" not in line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if obj.get("type") != "USER_INPUT":
+                continue
+            ts_ms = _parse_iso_ms(obj.get("created_at"))
+            if ts_ms is not None:
+                if window_start is not None and ts_ms < window_start:
+                    continue
+                if window_end is not None and ts_ms > window_end:
+                    continue
+            raw_content = obj.get("content")
+            if not raw_content:
+                continue
+            cleaned = str(sanitize_text(raw_content, max_len=240)).strip()
+            if cleaned and cleaned not in seen:
+                seen.add(cleaned)
+                prompts.append(cleaned)
+                if len(prompts) >= max_items:
+                    break
+    except OSError:
+        return []
+    return prompts
+
+
 def start_audit(
     layout: WorkspaceLayout,
     *,
@@ -591,8 +692,10 @@ def record_stage_telemetry(
     human_wait_ms: Optional[int] = None,
     note: Optional[str] = None,
     retry_count: Optional[int] = None,
+    prompt_ref: Optional[str] = None,
+    prompt_excerpt: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Tự động ghi telemetry stage (event + step + model) từ lifecycle/gate mà không cần LLM gọi thủ công."""
+    """Tự động ghi telemetry stage (event + step + model + prompt_ref) từ lifecycle/gate mà không cần LLM gọi thủ công."""
     if not is_audit_enabled(layout):
         return {"logged": False, "reason": "audit_disabled"}
 
@@ -606,6 +709,7 @@ def record_stage_telemetry(
     exec_trace = trace_data.setdefault("execution_trace", {})
     events = exec_trace.setdefault("events", [])
     steps = exec_trace.setdefault("steps", [])
+    resolved_prompt_ref = prompt_ref or STAGE_PROMPT_REFS.get(stage)
 
     now = utc_now_iso()
     ev: Dict[str, Any] = {
@@ -617,6 +721,8 @@ def record_stage_telemetry(
     }
     if model:
         ev["model"] = sanitize_text(model, max_len=80)
+    if resolved_prompt_ref:
+        ev["prompt_ref"] = sanitize_text(resolved_prompt_ref, max_len=160)
     if duration_ms is not None and int(duration_ms) >= 0:
         ev["model_time_ms"] = int(duration_ms)
     if human_wait_ms is not None and int(human_wait_ms) >= 0:
@@ -628,15 +734,18 @@ def record_stage_telemetry(
         exec_trace["retry_count"] = int(retry_count)
 
     if status in {"approved", "awaiting_approval", "failed"} or human_wait_ms is not None:
-        steps.append(
-            {
-                "step_index": len(steps) + 1,
-                "agent": sanitize_text(stage, max_len=60),
-                "model": sanitize_text(model, max_len=80) if model else None,
-                "duration_ms": int(duration_ms) if (duration_ms is not None and int(duration_ms) >= 0) else None,
-                "note": sanitize_text(note or status, max_len=160),
-            }
-        )
+        step_entry: Dict[str, Any] = {
+            "step_index": len(steps) + 1,
+            "agent": sanitize_text(stage, max_len=60),
+            "model": sanitize_text(model, max_len=80) if model else None,
+            "duration_ms": int(duration_ms) if (duration_ms is not None and int(duration_ms) >= 0) else None,
+            "note": sanitize_text(note or status, max_len=160),
+        }
+        if resolved_prompt_ref:
+            step_entry["prompt_ref"] = sanitize_text(resolved_prompt_ref, max_len=160)
+        if prompt_excerpt:
+            step_entry["prompt_excerpt"] = sanitize_text(prompt_excerpt, max_len=280)
+        steps.append(step_entry)
 
     atomic_write_json(trace_path, trace_data)
 
@@ -736,6 +845,14 @@ def finalize_audit(
     f01["task_identity"]["ended_at"] = now
     git_meta = _git_head_and_branch(layout.root)
     f01["task_identity"]["git_commit_after"] = git_meta["commit"]
+    if not f01["task_identity"].get("user_commands_log"):
+        cmd_log = collect_antigravity_prompt_trace(
+            sid=str(f01.get("task_identity", {}).get("run_id") or ""),
+            started_at=f01.get("task_identity", {}).get("started_at"),
+            ended_at=now,
+        )
+        if cmd_log:
+            f01["task_identity"]["user_commands_log"] = cmd_log
 
     start_ms = _parse_iso_ms(f01.get("task_identity", {}).get("started_at"))
     end_ms = _parse_iso_ms(now)
@@ -850,4 +967,211 @@ def finalize_audit(
         "total_tokens": usage_cost["total_tokens"],
         "total_estimated_cost": usage_cost["total_estimated_cost"],
         "unpriced_models": usage_cost["unpriced_models"],
+    }
+
+
+def _clamp_pct(val: Any) -> int:
+    try:
+        return max(0, min(95, int(round(float(val)))))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _norm_impact(raw: Any) -> Dict[str, int]:
+    d = raw if isinstance(raw, dict) else {}
+    return {
+        "accuracy_gain_pct": _clamp_pct(d.get("accuracy_gain_pct")),
+        "speed_gain_pct": _clamp_pct(d.get("speed_gain_pct")),
+        "token_reduction_pct": _clamp_pct(d.get("token_reduction_pct")),
+    }
+
+
+def save_audit_review(
+    layout: WorkspaceLayout,
+    *,
+    audit_dir: str,
+    review_payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Lưu báo cáo tối ưu hóa Prompt & Context (`05-optimization-review.json`) đã sanitize & chuẩn hóa."""
+    if not is_audit_enabled(layout):
+        return {"saved": False, "reason": "audit_disabled"}
+    if not isinstance(review_payload, dict):
+        raise SpeedyError(ErrorCode.INVALID_INPUT, "review_payload phải là JSON object.")
+
+    dir_path = resolve_within_scope(layout.root, audit_dir)
+    if not dir_path.is_dir():
+        raise SpeedyError(ErrorCode.NOT_FOUND, f"Thư mục audit không tồn tại: {audit_dir}", path=audit_dir)
+
+    user_reviews: List[Dict[str, Any]] = []
+    for item in (review_payload.get("user_command_reviews") or [])[:10]:
+        if not isinstance(item, dict):
+            continue
+        user_reviews.append(
+            {
+                "original_command": sanitize_text(item.get("original_command") or "", max_len=280),
+                "issue": sanitize_text(item.get("issue") or "", max_len=360),
+                "improved_command": sanitize_text(item.get("improved_command") or "", max_len=360),
+                "impact": _norm_impact(item.get("impact")),
+            }
+        )
+
+    agent_reviews: List[Dict[str, Any]] = []
+    for item in (review_payload.get("agent_prompt_reviews") or [])[:15]:
+        if not isinstance(item, dict):
+            continue
+        prio = str(item.get("priority") or "medium").strip().lower()
+        if prio not in {"high", "medium", "low"}:
+            prio = "medium"
+        agent_name = str(sanitize_text(item.get("agent") or "general", max_len=60))
+        agent_reviews.append(
+            {
+                "agent": agent_name,
+                "prompt_ref": sanitize_text(item.get("prompt_ref") or STAGE_PROMPT_REFS.get(agent_name) or "", max_len=160),
+                "priority": prio,
+                "finding": sanitize_text(item.get("finding") or "", max_len=360),
+                "recommendation": sanitize_text(item.get("recommendation") or "", max_len=420),
+                "impact": _norm_impact(item.get("impact")),
+            }
+        )
+
+    normalized = redact_payload(
+        {
+            "schema_version": "1.0",
+            "reviewed_at": utc_now_iso(),
+            "reviewer_role": "prompt_context_engineering_specialist",
+            "basis": "estimated_expert_projection",
+            "overall_summary": sanitize_text(review_payload.get("overall_summary") or "", max_len=600),
+            "estimated_impact": _norm_impact(review_payload.get("estimated_impact")),
+            "user_command_reviews": user_reviews,
+            "agent_prompt_reviews": agent_reviews,
+        }
+    )
+
+    out_path = dir_path / REVIEW_FILENAME
+    atomic_write_json(out_path, normalized)
+    return {
+        "saved": True,
+        "audit_dir": dir_path.relative_to(layout.root).as_posix(),
+        "review_path": out_path.relative_to(layout.root).as_posix(),
+        "user_command_reviews": len(user_reviews),
+        "agent_prompt_reviews": len(agent_reviews),
+        "estimated_impact": normalized["estimated_impact"],
+    }
+
+
+def analyze_audit_runs(
+    layout: WorkspaceLayout,
+    *,
+    month: Optional[str] = None,
+    sid: Optional[str] = None,
+    audit_dir: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Tạo Audit Analysis Packet gọn nhẹ + tín hiệu định lượng (`auto_signals`) cho chuyên gia `/audit`."""
+    if not is_audit_enabled(layout):
+        return {"enabled": False, "reason": "audit_disabled", "runs_count": 0, "runs": []}
+
+    from audit_viewer import load_runs
+
+    audit_root = resolve_within_scope(layout.root, audit_dir) if audit_dir else layout.audit_dir
+    all_runs = load_runs(audit_root, sessions_dir=layout.sessions_dir, layout=layout)
+
+    if sid:
+        selected = [r for r in all_runs if r.get("run_id") == sid]
+    elif month:
+        selected = [r for r in all_runs if r.get("month") == month]
+    else:
+        target_month = datetime.now().strftime("%Y-%m")
+        selected = [r for r in all_runs if r.get("month") == target_month] or all_runs[-10:]
+
+    packet_runs: List[Dict[str, Any]] = []
+    sum_tokens = 0
+    sum_cached = 0
+    sum_in = 0
+    sum_cost = 0.0
+    cost_known = 0
+    wall_vals: List[int] = []
+
+    for r in sorted(selected, key=lambda x: str(x.get("started_at") or ""), reverse=True):
+        in_tok = int(r.get("input_tokens") or 0)
+        cached_tok = int(r.get("cached_input_tokens") or 0)
+        tot_tok = r.get("total_tokens")
+        cache_ratio = round(cached_tok / in_tok, 3) if in_tok > 0 else None
+        if isinstance(tot_tok, int):
+            sum_tokens += tot_tok
+            sum_in += in_tok
+            sum_cached += cached_tok
+        if isinstance(r.get("cost"), (int, float)):
+            sum_cost += float(r["cost"])
+            cost_known += 1
+        if isinstance(r.get("wall_ms"), int):
+            wall_vals.append(int(r["wall_ms"]))
+
+        signals: List[str] = []
+        if cache_ratio is not None and cache_ratio < 0.5 and in_tok > 50_000:
+            signals.append(f"low_cache_hit:{int(cache_ratio * 100)}%")
+        if isinstance(tot_tok, int) and tot_tok > 2_000_000:
+            signals.append(f"high_token_session:{tot_tok:,}")
+        if isinstance(r.get("human_wait_ms"), int) and r["human_wait_ms"] > 120_000:
+            signals.append(f"long_human_wait:{r['human_wait_ms'] // 1000}s")
+        if int(r.get("retries") or 0) >= 2:
+            signals.append(f"high_retry_count:{r.get('retries')}")
+        desc = str(r.get("description") or "").strip()
+        if desc and len(desc.split()) < 6:
+            signals.append("vague_short_prompt")
+        if r.get("unit_test") in {None, "not_available"}:
+            signals.append("missing_unit_test_telemetry")
+
+        run_dir_path = Path(r["path"])
+        try:
+            rel_audit_dir = run_dir_path.relative_to(layout.root).as_posix()
+        except ValueError:
+            rel_audit_dir = r["path"]
+
+        packet_runs.append(
+            {
+                "sid": r.get("run_id"),
+                "task_id": r.get("task_id"),
+                "audit_dir": rel_audit_dir,
+                "command_ref": r.get("command_ref"),
+                "description": desc,
+                "user_commands_log": r.get("user_commands_log") or [],
+                "outcome": r.get("outcome"),
+                "completion_level": r.get("completion_level"),
+                "models_by_agent": r.get("models_by_agent") or {},
+                "total_tokens": tot_tok,
+                "cached_input_tokens": r.get("cached_input_tokens"),
+                "cache_hit_ratio": cache_ratio,
+                "cost": r.get("cost"),
+                "wall_ms": r.get("wall_ms"),
+                "human_wait_ms": r.get("human_wait_ms"),
+                "tool_time_ms": r.get("tool_time_ms"),
+                "files_changed": r.get("files_changed"),
+                "unit_test": r.get("unit_test"),
+                "build_status": r.get("build_status"),
+                "steps": [
+                    {
+                        "agent": s.get("agent"),
+                        "model": s.get("model"),
+                        "prompt_ref": s.get("prompt_ref"),
+                        "duration_ms": s.get("duration_ms"),
+                        "note": s.get("note"),
+                    }
+                    for s in (r.get("steps") or [])[:15]
+                ],
+                "has_review": bool(r.get("optimization_review")),
+                "auto_signals": signals,
+            }
+        )
+
+    return {
+        "enabled": True,
+        "filter": {"month": month, "sid": sid},
+        "runs_count": len(packet_runs),
+        "summary": {
+            "total_tokens": sum_tokens if sum_tokens > 0 else None,
+            "overall_cache_hit_ratio": round(sum_cached / sum_in, 3) if sum_in > 0 else None,
+            "total_estimated_cost": round(sum_cost, 4) if cost_known > 0 else None,
+            "avg_wall_ms": int(sum(wall_vals) / len(wall_vals)) if wall_vals else None,
+        },
+        "runs": packet_runs,
     }

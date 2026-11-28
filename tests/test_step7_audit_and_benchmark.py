@@ -314,6 +314,114 @@ class TestStep7AuditAndBenchmark(unittest.TestCase):
             # cost = (10000/1e6)*0.5 + (20000/1e6)*0.125 + (2000/1e6)*3.0 = 0.005 + 0.0025 + 0.006 = 0.0135
             self.assertAlmostEqual(fin["total_estimated_cost"], 0.0135, places=6)
 
+    def test_audit_analyze_save_review_and_visual_audit_view_and_disable_flag(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp) / "app"
+            shutil.copytree(SRC_ROOT, ws)
+            brain_dir = Path(tmp) / "fake_brain"
+            log_dir = brain_dir / "conv-5678" / ".system_generated" / "logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            s_res = json.loads(
+                _cli(ws, "session", "new", "--slug", "prompt-opt", "--goal", "Fix bug").stdout
+            )
+            sid = s_res["sid"]
+            audit_dir_rel = s_res["audit"]["audit_dir"]
+            f01 = json.loads((ws / audit_dir_rel / "01-input-context.json").read_text(encoding="utf-8"))
+            started_at = f01["task_identity"]["started_at"]
+
+            # Ghi mock USER_INPUT + PLANNER_RESPONSE (có chứa secret phải bị che!)
+            (log_dir / "transcript.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"step_index": 1, "type": "USER_INPUT", "created_at": started_at, "content": "/flow fix bug api_key=SECRET999"}),
+                        json.dumps({"step_index": 2, "type": "TOOL_OUTPUT", "content": f"sid={sid}"}),
+                        json.dumps(
+                            {
+                                "step_index": 3,
+                                "type": "PLANNER_RESPONSE",
+                                "status": "DONE",
+                                "created_at": started_at,
+                                "model": "gemini-4-neon-medium",
+                                "input_tokens": 80000,
+                                "cache_read_tokens": 10000,
+                                "output_tokens": 3000,
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            env_b = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "ANTIGRAVITY_BRAIN_DIR": str(brain_dir)}
+            subprocess.run(
+                [sys.executable, str(CLI_PATH), "--workspace", str(ws), "audit", "finalize", "--audit-dir", audit_dir_rel, "--outcome", "success", "--completion-level", "verified"],
+                capture_output=True, text=True, env=env_b, check=True, timeout=20,
+            )
+
+            # 1. audit analyze phải phát hiện auto_signals (low_cache_hit, vague_short_prompt) & che secret trong user_commands_log
+            an_proc = subprocess.run(
+                [sys.executable, str(CLI_PATH), "--workspace", str(ws), "audit", "analyze", "--sid", sid],
+                capture_output=True, text=True, env=env_b, check=True, timeout=20,
+            )
+            an = json.loads(an_proc.stdout)
+            self.assertTrue(an["enabled"])
+            self.assertEqual(an["runs_count"], 1)
+            run_info = an["runs"][0]
+            self.assertTrue(any("vague_short_prompt" in s for s in run_info["auto_signals"]), run_info["auto_signals"])
+            self.assertTrue(any("low_cache_hit" in s for s in run_info["auto_signals"]), run_info["auto_signals"])
+            self.assertTrue(any("[REDACTED]" in c for c in run_info["user_commands_log"]))
+            self.assertFalse(any("SECRET999" in c for c in run_info["user_commands_log"]))
+
+            # 2. audit save-review lưu 05-optimization-review.json + sanitize XSS/secret
+            review_obj = {
+                "overall_summary": "Cần cụ thể hóa scope ngay ở user command và gom batch đọc file ở Implementer.",
+                "estimated_impact": {"accuracy_gain_pct": 22, "speed_gain_pct": 30, "token_reduction_pct": 35},
+                "user_command_reviews": [
+                    {
+                        "original_command": "/flow fix bug <script>x</script>",
+                        "issue": "Thiếu tên module và tiêu chí AC khiến Agent tốn nhiều vòng tìm kiếm.",
+                        "improved_command": "/flow Sửa lỗi timeout ở payments/charge.py kèm unit test AC-001",
+                        "impact": {"accuracy_gain_pct": 20, "speed_gain_pct": 25, "token_reduction_pct": 30},
+                    }
+                ],
+                "agent_prompt_reviews": [
+                    {
+                        "agent": "implementer",
+                        "priority": "high",
+                        "finding": "Đọc từng file rời rạc làm tỷ lệ cache hit thấp.",
+                        "recommendation": "Gom batch read_file và chạy repomap query trước khi mở source.",
+                        "impact": {"accuracy_gain_pct": 10, "speed_gain_pct": 20, "token_reduction_pct": 28},
+                    }
+                ],
+            }
+            sr_res = json.loads(
+                _cli(ws, "audit", "save-review", "--audit-dir", audit_dir_rel, "--review-json", json.dumps(review_obj, ensure_ascii=False)).stdout
+            )
+            self.assertTrue(sr_res["saved"])
+            self.assertTrue((ws / audit_dir_rel / "05-optimization-review.json").is_file())
+
+            # 3. audit-view hiển thị đầy đủ Review cards, 3 Impact badge & chống XSS
+            av = json.loads(_cli(ws, "audit-view", "--month", sid[:7], "--no-open").stdout)
+            html_out = Path(av["path"]).read_text(encoding="utf-8")
+            self.assertIn("Prompt &amp; Context Optimization Review", html_out)
+            self.assertIn("Accuracy +22%", html_out)
+            self.assertIn("Speed +30%", html_out)
+            self.assertIn("Tokens -35%", html_out)
+            self.assertIn("prio-high", html_out)
+            self.assertIn("Agent: implementer", html_out)
+            self.assertNotIn("<script>x</script>", html_out)
+
+            # 4. Khi IS_AUDIT=0 -> analyze và save-review đều trả disabled!
+            (ws / "ai-workspace" / ".env").write_text("IS_AUDIT=0\n", encoding="utf-8")
+            an_off = json.loads(_cli(ws, "audit", "analyze", "--sid", sid).stdout)
+            self.assertFalse(an_off["enabled"])
+            sr_off = json.loads(
+                _cli(ws, "audit", "save-review", "--audit-dir", audit_dir_rel, "--review-json", json.dumps(review_obj)).stdout
+            )
+            self.assertFalse(sr_off["saved"])
+            self.assertEqual(sr_off["reason"], "audit_disabled")
+
 
 if __name__ == "__main__":
     unittest.main()

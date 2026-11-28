@@ -42,6 +42,7 @@ class TestStep3RolesAndAntigravityAdapter(unittest.TestCase):
             "orchestrator",
             "analyst",
             "specs",
+            "audit",
             "architect",
             "implementer",
             "reviewer",
@@ -96,6 +97,7 @@ class TestStep3RolesAndAntigravityAdapter(unittest.TestCase):
             "analyst",
             "docs",
             "docs-view",
+            "audit",
             "audit-view",
             "refresh-rule",
             "refresh-style",
@@ -155,8 +157,8 @@ class TestStep3RolesAndAntigravityAdapter(unittest.TestCase):
             self.assertEqual(cat_proc.returncode, 0, cat_proc.stderr)
             catalog = json.loads(cat_proc.stdout)
             self.assertFalse(catalog["is_behavioral_verification"])
-            self.assertEqual(catalog["count"]["roles"], 9)
-            self.assertEqual(catalog["count"]["antigravity_skills"], 11)
+            self.assertEqual(catalog["count"]["roles"], 10)
+            self.assertEqual(catalog["count"]["antigravity_skills"], 12)
             self.assertEqual(catalog["count"]["antigravity_rules"], 3)
 
             # Kiểm tra định tuyến model cho role specs -> Gemini Neon

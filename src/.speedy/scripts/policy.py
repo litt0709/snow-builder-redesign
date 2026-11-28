@@ -78,7 +78,7 @@ DEFAULT_POLICY_CONFIG: Dict[str, object] = {
         "standard_model": "Gemini Neon",
         "complex_model": "Gemini Carbon",
         "light_roles": ["orchestrator", "docs-manager", "docs", "writer", "wrapup", "bootstrap"],
-        "standard_roles": ["analyst", "specs", "implementer", "tester", "root_cause", "verify_report"],
+        "standard_roles": ["analyst", "specs", "audit", "implementer", "tester", "root_cause", "verify_report"],
         "complex_eligible_roles": ["architect", "reviewer"],
     },
     "profiles": {

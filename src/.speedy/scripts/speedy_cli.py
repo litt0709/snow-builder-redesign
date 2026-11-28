@@ -381,9 +381,34 @@ def _handle_verify(layout, args: argparse.Namespace) -> int:
 
 
 def _handle_audit(layout, args: argparse.Namespace) -> int:
-    from audit import finalize_audit, record_audit_event, start_audit
+    from audit import analyze_audit_runs, finalize_audit, record_audit_event, save_audit_review, start_audit
 
     action = args.audit_action
+    if action == "analyze":
+        return _emit_ok(
+            analyze_audit_runs(
+                layout,
+                month=getattr(args, "month", None),
+                sid=getattr(args, "sid", None),
+                audit_dir=getattr(args, "audit_dir", None),
+            )
+        )
+    if action == "save-review":
+        raw_arg = args.review_json
+        if raw_arg.startswith("@"):
+            from contracts import resolve_within_scope
+
+            json_file = resolve_within_scope(layout.root, raw_arg[1:])
+            if not json_file.is_file():
+                raise SpeedyError(ErrorCode.NOT_FOUND, f"File review JSON không tồn tại: {raw_arg[1:]}")
+            raw_text = json_file.read_text(encoding="utf-8")
+        else:
+            raw_text = raw_arg
+        try:
+            payload = json.loads(raw_text)
+        except json.JSONDecodeError as exc:
+            raise SpeedyError(ErrorCode.INVALID_INPUT, f"--review-json không phải JSON hợp lệ: {exc}") from exc
+        return _emit_ok(save_audit_review(layout, audit_dir=args.audit_dir, review_payload=payload))
     if action == "start":
         return _emit_ok(
             start_audit(
@@ -432,7 +457,7 @@ def _handle_audit(layout, args: argparse.Namespace) -> int:
                 usage_source=args.usage_source,
             )
         )
-    raise SpeedyError(ErrorCode.INVALID_INPUT, "Subcommand của audit phải là: start | event | finalize.")
+    raise SpeedyError(ErrorCode.INVALID_INPUT, "Subcommand của audit phải là: start | event | finalize | analyze | save-review.")
 
 
 def _handle_docs_view(layout, args: argparse.Namespace) -> int:
@@ -735,6 +760,15 @@ def build_parser() -> argparse.ArgumentParser:
     a_fin.add_argument("--files-changed", type=int)
     a_fin.add_argument("--usage-json", help="JSON mảng số đo token xác thực (nếu có)")
     a_fin.add_argument("--usage-source", help="Tên nguồn đo xác thực")
+
+    a_an = aud_sub.add_parser("analyze", help="Tổng hợp Audit Analysis Packet + tín hiệu tối ưu cho /audit")
+    a_an.add_argument("--month", help="Lọc theo tháng YYYY-MM")
+    a_an.add_argument("--sid", help="Lọc theo đúng 1 Session ID")
+    a_an.add_argument("--audit-dir", help="Đường dẫn thư mục audit tùy chỉnh")
+
+    a_sr = aud_sub.add_parser("save-review", help="Lưu báo cáo tối ưu hóa Prompt & Context (05-optimization-review.json)")
+    a_sr.add_argument("--audit-dir", required=True, help="Thư mục phiên audit cần gắn review")
+    a_sr.add_argument("--review-json", required=True, help="Chuỗi JSON review hoặc @path/to/review.json")
 
     # 12. docs-view & audit-view (mặc định không mở trình duyệt trong CLI; thêm --open khi người dùng yêu cầu; giữ --no-open tương thích)
     p_dv = sub.add_parser("docs-view", help="Kết xuất bộ tài liệu Markdown thành HTML standalone")

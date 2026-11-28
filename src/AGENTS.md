@@ -37,6 +37,7 @@
 | `/specs` | Tạo & cập nhật lặp lại tài liệu thiết kế tại `ai-workspace/specs/` | [.speedy/commands/specs.md](.speedy/commands/specs.md) |
 | `/analyst` | Phân tích yêu cầu & xuất Implementation Brief độc lập | [.speedy/commands/analyst.md](.speedy/commands/analyst.md) |
 | `/docs` | Lập Topic Map & biên soạn tài liệu kỹ thuật ứng dụng / cross-repo | [.speedy/commands/docs.md](.speedy/commands/docs.md) |
+| `/audit` | Chuyên gia Prompt & Context Engineering review hiệu năng/token và đồng bộ vào `audit-view` | [.speedy/commands/audit.md](.speedy/commands/audit.md) |
 | `/docs-view`, `/audit-view` | Kết xuất HTML đọc tài liệu và bảng điều khiển hiệu quả AI | [.speedy/commands/docs-view.md](.speedy/commands/docs-view.md) · [.speedy/commands/audit-view.md](.speedy/commands/audit-view.md) |
 | `/refresh-rule`, `/refresh-style` | Trích xuất coding convention và style guide từ mã nguồn thực tế | [.speedy/commands/refresh-rule.md](.speedy/commands/refresh-rule.md) · [.speedy/commands/refresh-style.md](.speedy/commands/refresh-style.md) |
 | `/cleanup`, `/update-speedy` | Dọn dẹp artifact cũ có xác nhận và cập nhật engine an toàn | [.speedy/commands/cleanup.md](.speedy/commands/cleanup.md) · [.speedy/commands/update-speedy.md](.speedy/commands/update-speedy.md) |

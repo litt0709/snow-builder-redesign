@@ -37,6 +37,7 @@ class TestStep6UserCommandsAndViewers(unittest.TestCase):
             "refresh-rule.md",
             "refresh-style.md",
             "docs-view.md",
+            "audit.md",
             "audit-view.md",
             "cleanup.md",
             "update-speedy.md",

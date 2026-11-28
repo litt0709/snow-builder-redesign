@@ -2,8 +2,8 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-28T02:20:11Z",
-  "file_count": 121,
+  "generated_at": "2026-11-28T08:58:05Z",
+  "file_count": 124,
   "files": {
     ".agents/rules/.gitkeep": {
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -33,6 +33,11 @@
     ".agents/skills/analyst/SKILL.md": {
       "sha256": "8e42d576fa17706e650e35059214b2ef4fdefc032e4ae41fae2e30341945f23d",
       "size": 996,
+      "ownership": "kit_owned"
+    },
+    ".agents/skills/audit/SKILL.md": {
+      "sha256": "5a1ea0b761099919b40208ca851e1cdd8d60bfcfafb6d041444e569a97abb18c",
+      "size": 1686,
       "ownership": "kit_owned"
     },
     ".agents/skills/audit-view/SKILL.md": {
@@ -108,6 +113,11 @@
     ".speedy/commands/audit-view.md": {
       "sha256": "c3475e6b0816dc02e20e8b43e3cc8b01297817c21d0b39657d428cc8ae98fd25",
       "size": 1227,
+      "ownership": "kit_owned"
+    },
+    ".speedy/commands/audit.md": {
+      "sha256": "e385b0386a9a41f535fdaade80212b07e3357ec1015fe08bf02e0ff2ea1d2093",
+      "size": 2823,
       "ownership": "kit_owned"
     },
     ".speedy/commands/cleanup.md": {
@@ -315,6 +325,11 @@
       "size": 2719,
       "ownership": "kit_owned"
     },
+    ".speedy/roles/audit.md": {
+      "sha256": "264ac9b9073d3a7e236b88e1ad94a37d6d06e760549128f9b7722afa176e18b9",
+      "size": 3769,
+      "ownership": "kit_owned"
+    },
     ".speedy/roles/docs-manager.md": {
       "sha256": "b0ed89ef778d31757ab3aaf829eff4fd670d27a02ea9d8f21f01a4de5cf03e9e",
       "size": 4192,
@@ -411,13 +426,13 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/audit.py": {
-      "sha256": "327568e320288f8ea579d16e51cb423b5e353d52f48954ed02afafb02719452d",
-      "size": 32896,
+      "sha256": "26c64970e611eead2a5e4a26c92b7b9eb336b62f86bd9ce354918ab4d7bb6c0a",
+      "size": 45880,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/audit_viewer.py": {
-      "sha256": "3aeea302ae8eb9e1da036f31e0824e0fd65eb66361e95941dd292904e6ebd2fc",
-      "size": 36670,
+      "sha256": "eef1f4a2c0ec4228894a2579b3faa66bb361f8c5400a285f98ffe19660003ed6",
+      "size": 44282,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/benchmark.py": {
@@ -471,8 +486,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/policy.py": {
-      "sha256": "8212adff038ce7679b5873c88860859b2a751781bc094c57fbe676f9d37081c9",
-      "size": 17360,
+      "sha256": "0eabd4330f45ec0941c6dc105ffcb07bfeb2b04c4bcaa39d337a8e77c77a8a42",
+      "size": 17369,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/repomap.py": {
@@ -491,8 +506,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/speedy_cli.py": {
-      "sha256": "1159f9fe8f1fabecab2081a3085b1d403fa310c2b4ba65e29aa868bd2ffcdc31",
-      "size": 34108,
+      "sha256": "80a5dfdabb48ddaf9a007929a806b693eb6c31af122da61139451070bdbcea7b",
+      "size": 35962,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/storage.py": {
@@ -506,8 +521,8 @@
       "ownership": "kit_owned"
     },
     "AGENTS.md": {
-      "sha256": "34f217d8fd347343c80708a20f095d2aa065343b888217e2c169254c6817b868",
-      "size": 6244,
+      "sha256": "eb1c6a50ea96c3b321f820389051fea1ae258de831416d6457073f14b7c679c9",
+      "size": 6418,
       "ownership": "user_customizable"
     },
     "ai-workspace/.env.example": {

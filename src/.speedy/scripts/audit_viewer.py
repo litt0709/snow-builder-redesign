@@ -20,8 +20,11 @@ from typing import Any, Dict, List, Optional
 
 from audit import (
     AUDIT_FILENAMES,
+    REVIEW_FILENAME,
+    STAGE_PROMPT_REFS,
     _compute_reference_cost,
     _load_pricing,
+    collect_antigravity_prompt_trace,
     collect_antigravity_transcript_usage,
     is_audit_enabled,
     sanitize_text,
@@ -229,6 +232,7 @@ def _enrich_from_session_state(run: Dict[str, Any], sessions_dir: Optional[Path]
                 {
                     "agent": st_name,
                     "model": select_gemini_model(st_name, high_risk=high_risk)["model"],
+                    "prompt_ref": STAGE_PROMPT_REFS.get(st_name),
                     "duration_ms": dur,
                     "note": str(st_status),
                 }
@@ -286,6 +290,14 @@ def _enrich_from_antigravity_transcript(run: Dict[str, Any], layout: Optional[Wo
         m = u.get("model")
         if m and m not in models_map.values():
             models_map.setdefault("antigravity", str(m))
+    if not run.get("user_commands_log"):
+        cmd_log = collect_antigravity_prompt_trace(
+            sid=str(run.get("run_id") or ""),
+            started_at=run.get("started_at"),
+            ended_at=run.get("ended_at"),
+        )
+        if cmd_log:
+            run["user_commands_log"] = cmd_log
 
 
 def load_runs(
@@ -301,6 +313,7 @@ def load_runs(
         f02 = _read_dict_tolerant(run_dir / AUDIT_FILENAMES[1])
         f03 = _read_dict_tolerant(run_dir / AUDIT_FILENAMES[2])
         f04 = _read_dict_tolerant(run_dir / AUDIT_FILENAMES[3])
+        f05 = _read_dict_tolerant(run_dir / REVIEW_FILENAME)
         if not any((f01, f02, f03, f04)):
             continue
 
@@ -351,6 +364,9 @@ def load_runs(
             "jira_ticket": _first(ident.get("jira_ticket"), final_summary.get("jira_ticket")),
             "command_ref": _first(ident.get("command_ref")),
             "description": sanitize_text(ident.get("sanitized_task_description"), max_len=400),
+            "user_commands_log": ident.get("user_commands_log") if isinstance(ident.get("user_commands_log"), list) else [],
+            "optimization_review": f05 if f05 else None,
+            "retries": _first(_get(f02, "execution_trace", "retry_count"), default=0),
             "started_at": started,
             "ended_at": ended,
             "outcome": _first(out.get("outcome"), final_summary.get("outcome"), default="partial"),
@@ -635,14 +651,94 @@ def _render_task_panel(run: Dict[str, Any], idx: int) -> str:
         ]
     )
 
+    def _render_impact_pills(impact: Any) -> str:
+        imp = impact if isinstance(impact, dict) else {}
+        acc = imp.get("accuracy_gain_pct")
+        spd = imp.get("speed_gain_pct")
+        tok = imp.get("token_reduction_pct")
+        pills = []
+        if acc is not None:
+            pills.append(f'<span class="impact-badge impact-acc">🎯 Accuracy +{_safe(acc)}%</span>')
+        if spd is not None:
+            pills.append(f'<span class="impact-badge impact-spd">⚡ Speed +{_safe(spd)}%</span>')
+        if tok is not None:
+            pills.append(f'<span class="impact-badge impact-tok">🪙 Tokens -{_safe(tok)}%</span>')
+        return f'<div class="impact-row">{"".join(pills)}</div>' if pills else ""
+
+    def _render_optimization_review(review: Optional[Dict[str, Any]]) -> str:
+        if not review:
+            return '<div class="review-empty">Chưa có báo cáo tối ưu hóa Prompt &amp; Context cho phiên này. Chạy <code>/audit</code> để nhận đánh giá chuyên sâu và ước tính % cải thiện.</div>'
+
+        overall_pills = _render_impact_pills(review.get("estimated_impact"))
+        summary_html = f'<p class="review-summary">{_safe(review.get("overall_summary"))}</p>' if review.get("overall_summary") else ""
+
+        user_cards: List[str] = []
+        for u in review.get("user_command_reviews") or []:
+            if not isinstance(u, dict):
+                continue
+            user_cards.append(
+                '<div class="rec-card">'
+                '<div class="rec-head"><strong>User Command Optimization</strong></div>'
+                f'<div class="diff-grid">'
+                f'<div class="diff-col diff-before"><small>Hiện tại (Before)</small><code>{_safe(u.get("original_command"))}</code></div>'
+                f'<div class="diff-col diff-after"><small>Đề xuất (After)</small><code>{_safe(u.get("improved_command"))}</code></div>'
+                f"</div>"
+                f'<p class="rec-body">{_safe(u.get("issue"))}</p>'
+                f'{_render_impact_pills(u.get("impact"))}'
+                "</div>"
+            )
+
+        agent_cards: List[str] = []
+        for a in review.get("agent_prompt_reviews") or []:
+            if not isinstance(a, dict):
+                continue
+            prio = str(a.get("priority") or "medium").lower()
+            if prio not in {"high", "medium", "low"}:
+                prio = "medium"
+            pref_html = f' · <code>{_safe(a.get("prompt_ref"))}</code>' if a.get("prompt_ref") else ""
+            agent_cards.append(
+                f'<div class="rec-card">'
+                f'<div class="rec-head">'
+                f'<div><strong>Agent: {_safe(a.get("agent"))}</strong>{pref_html}</div>'
+                f'<span class="prio-badge prio-{prio}">{_safe(prio.upper())}</span>'
+                f"</div>"
+                f'<p class="rec-body"><strong>Vấn đề:</strong> {_safe(a.get("finding"))}</p>'
+                f'<p class="rec-body"><strong>Đề xuất:</strong> {_safe(a.get("recommendation"))}</p>'
+                f'{_render_impact_pills(a.get("impact"))}'
+                f"</div>"
+            )
+
+        user_block = f'<h4>User Command Suggestions</h4>{"".join(user_cards)}' if user_cards else ""
+        agent_block = f'<h4>Agent Prompt &amp; Context Recommendations</h4>{"".join(agent_cards)}' if agent_cards else ""
+        return (
+            '<div class="review-box">'
+            '<div class="review-header">'
+            '<div><strong>Prompt &amp; Context Optimization Review</strong> <small class="submeta">(ước tính bởi chuyên gia /audit)</small></div>'
+            f"{overall_pills}"
+            "</div>"
+            f"{summary_html}{user_block}{agent_block}"
+            "</div>"
+        )
+
+    cmd_log = run.get("user_commands_log") or []
+    cmd_log_html = ""
+    if cmd_log:
+        items_li = "".join(f"<li><code>{_safe(c)}</code></li>" for c in cmd_log[:8])
+        cmd_log_html = f'<h3>User commands logged</h3><ul class="cmd-list">{items_li}</ul>'
+
+    review_html = _render_optimization_review(run.get("optimization_review"))
+
     return f"""<section class="task-panel" id="task-panel-{idx}"{visibility}>
     <h2>{_safe(_task_display_name(run))}</h2>
     <p class="submeta">{" · ".join(meta_parts)}</p>
     {desc_html}
     {models_html}
     <div class="cards">{task_cards}</div>
+    {cmd_log_html}
     <h3>Step summary</h3>
     {_render_steps_table(run)}
+    <h3>Prompt &amp; Context Optimization</h3>
+    {review_html}
     <h3>Quality &amp; verification</h3>
     <div class="cards">{qual_cards or '<p class="empty">Chưa có dữ liệu kiểm chứng.</p>'}</div>
     <p><strong>Files changed:</strong> {_safe(_fmt_files_changed(run.get("files_changed"), run.get("change_measurement_status")))}</p>
@@ -768,7 +864,35 @@ td small {{ display:block; color:var(--muted); margin-top:4px; max-width:260px; 
 .pill {{ display:inline-block; border:1px solid var(--line); border-radius:999px; padding:2px 8px; margin:2px; color:var(--muted); font-size:12px; }}
 .notice {{ background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px; padding:14px 16px; margin:16px 0; }}
 .notice.warn {{ border-left-color:var(--warn); }}
-@media (max-width:900px) {{ .header {{ display:block; }} .kpis, .grid, .layout {{ grid-template-columns:1fr; }} .shell {{ padding:20px 16px 80px; }} .sidebar {{ max-height:none; }} }}
+.cmd-list {{ margin:8px 0 16px; padding-left:18px; }}
+.cmd-list li {{ margin:4px 0; }}
+.cmd-list code {{ background:var(--code-bg); padding:3px 7px; border-radius:4px; font-size:12px; display:inline-block; word-break:break-word; }}
+.review-empty {{ background:var(--code-bg); border:1px dashed var(--line); border-radius:8px; padding:12px 14px; color:var(--muted); font-size:13px; }}
+.review-box {{ background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--cost); border-radius:8px; padding:16px; margin:8px 0 16px; }}
+.review-header {{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-bottom:10px; border-bottom:1px solid var(--line); margin-bottom:12px; }}
+.review-summary {{ margin:0 0 12px; color:var(--fg); font-size:13px; }}
+.review-box h4 {{ font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:14px 0 8px; }}
+.rec-card {{ background:var(--bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:10px; }}
+.rec-head {{ display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:13px; }}
+.rec-body {{ margin:4px 0 8px; font-size:13px; color:var(--fg); }}
+.diff-grid {{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0; }}
+.diff-col {{ background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:8px 10px; }}
+.diff-col small {{ display:block; font-size:11px; font-weight:700; margin-bottom:4px; text-transform:uppercase; }}
+.diff-col code {{ display:block; font-size:12px; white-space:pre-wrap; word-break:break-word; background:none; padding:0; }}
+.diff-before {{ border-left:3px solid var(--bad); }}
+.diff-before small {{ color:var(--bad); }}
+.diff-after {{ border-left:3px solid var(--accent); }}
+.diff-after small {{ color:var(--accent-ink); }}
+.impact-row {{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }}
+.impact-badge {{ display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px; border:1px solid var(--line); background:var(--surface); }}
+.impact-acc {{ color:var(--cost); border-color:var(--cost); }}
+.impact-spd {{ color:var(--warn); border-color:var(--warn); }}
+.impact-tok {{ color:var(--accent-ink); border-color:var(--accent); }}
+.prio-badge {{ font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; border:1px solid var(--line); }}
+.prio-high {{ color:var(--bad); border-color:var(--bad); }}
+.prio-medium {{ color:var(--warn); border-color:var(--warn); }}
+.prio-low {{ color:var(--accent-ink); border-color:var(--accent); }}
+@media (max-width:900px) {{ .header {{ display:block; }} .kpis, .grid, .layout, .diff-grid {{ grid-template-columns:1fr; }} .shell {{ padding:20px 16px 80px; }} .sidebar {{ max-height:none; }} }}
 </style>
 </head>
 <body>
