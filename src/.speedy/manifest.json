@@ -2,7 +2,7 @@
   "schema_version": 1,
   "product": "Speedy DevKit",
   "version": "2.0.0",
-  "generated_at": "2026-11-28T02:14:13Z",
+  "generated_at": "2026-11-28T02:20:11Z",
   "file_count": 121,
   "files": {
     ".agents/rules/.gitkeep": {
@@ -166,8 +166,8 @@
       "ownership": "kit_owned"
     },
     ".speedy/config/model-pricing.json": {
-      "sha256": "dc554acef684ad75c74ec7a23e1990f1e416db186f42f8b67bc3051ee85770d2",
-      "size": 1879,
+      "sha256": "2ffe4e3242eba918a5dc05c9bff245fa8abc4bf54ee7042864d05c08238be8a8",
+      "size": 2073,
       "ownership": "kit_owned"
     },
     ".speedy/config/policy.default.json": {
@@ -411,13 +411,13 @@
       "ownership": "kit_owned"
     },
     ".speedy/scripts/audit.py": {
-      "sha256": "f78a681f5146ede1fb686ae6c32b0a1a2df51eedeb1be78aa20c3d43c8f01224",
-      "size": 27998,
+      "sha256": "327568e320288f8ea579d16e51cb423b5e353d52f48954ed02afafb02719452d",
+      "size": 32896,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/audit_viewer.py": {
-      "sha256": "a4e0c6762931d4cf0d1d0caf674f76bd8bfd2584a72aab3442b428b9ba0aad63",
-      "size": 34944,
+      "sha256": "3aeea302ae8eb9e1da036f31e0824e0fd65eb66361e95941dd292904e6ebd2fc",
+      "size": 36670,
       "ownership": "kit_owned"
     },
     ".speedy/scripts/benchmark.py": {

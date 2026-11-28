@@ -246,6 +246,74 @@ class TestStep7AuditAndBenchmark(unittest.TestCase):
             self.assertIn("N/A", html_out)
             self.assertNotIn("<th>Input</th>", html_out)
 
+    def test_antigravity_transcript_auto_metering_and_pricing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp) / "app"
+            shutil.copytree(SRC_ROOT, ws)
+            brain_dir = Path(tmp) / "fake_brain"
+            log_dir = brain_dir / "conv-1234" / ".system_generated" / "logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            s_res = json.loads(
+                _cli(ws, "session", "new", "--slug", "meter-test", "--goal", "Test token metering").stdout
+            )
+            sid = s_res["sid"]
+            audit_dir_rel = s_res["audit"]["audit_dir"]
+            f01 = json.loads((ws / audit_dir_rel / "01-input-context.json").read_text(encoding="utf-8"))
+            started_at = f01["task_identity"]["started_at"]
+
+            # Ghi mock transcript.jsonl giống định dạng thật của Antigravity IDE
+            (log_dir / "transcript.jsonl").write_text(
+                "\n".join(
+                    [
+                        json.dumps({"step_index": 1, "type": "TOOL_OUTPUT", "content": f"sid={sid}"}),
+                        json.dumps(
+                            {
+                                "step_index": 2,
+                                "type": "PLANNER_RESPONSE",
+                                "status": "DONE",
+                                "created_at": started_at,
+                                "model": "gemini-4-neon-medium",
+                                "input_tokens": 10000,
+                                "cache_read_tokens": 20000,
+                                "output_tokens": 2000,
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            env_with_brain = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1", "ANTIGRAVITY_BRAIN_DIR": str(brain_dir)}
+            fin_proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(CLI_PATH),
+                    "--workspace",
+                    str(ws),
+                    "audit",
+                    "finalize",
+                    "--audit-dir",
+                    audit_dir_rel,
+                    "--outcome",
+                    "success",
+                    "--completion-level",
+                    "verified",
+                ],
+                capture_output=True,
+                text=True,
+                env=env_with_brain,
+                timeout=20,
+            )
+            self.assertEqual(fin_proc.returncode, 0, fin_proc.stderr)
+            fin = json.loads(fin_proc.stdout)
+            self.assertEqual(fin["usage_source"], "antigravity_transcript")
+            # total_tokens = (fresh 10000 + cached 20000) + output 2000 = 32000
+            self.assertEqual(fin["total_tokens"], 32000)
+            # cost = (10000/1e6)*0.5 + (20000/1e6)*0.125 + (2000/1e6)*3.0 = 0.005 + 0.0025 + 0.006 = 0.0135
+            self.assertAlmostEqual(fin["total_estimated_cost"], 0.0135, places=6)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -130,6 +130,14 @@ def _lookup_model_price(model_name: str, pricing: Dict[str, Any]) -> Optional[Di
         aliases.add(_normalize_model_key(key))
         if norm in aliases:
             return entry
+    # Prefix fallback cho biến thể hậu tố tốc độ/effort (vd: gemini-4-neon-medium -> gemini-4-neon)
+    for key, entry in models.items():
+        if not isinstance(entry, dict):
+            continue
+        for alias in entry.get("aliases", []):
+            norm_a = _normalize_model_key(alias)
+            if norm_a.startswith("gemini-") and norm.startswith(norm_a + "-"):
+                return entry
     return None
 
 
@@ -262,6 +270,106 @@ def _parse_iso_ms(ts: Optional[str]) -> Optional[int]:
         return int(dt.timestamp() * 1000)
     except ValueError:
         return None
+
+
+def collect_antigravity_transcript_usage(
+    *,
+    sid: str,
+    started_at: Optional[str],
+    ended_at: Optional[str] = None,
+    brain_dir: Optional[Path] = None,
+) -> Optional[List[Dict[str, Any]]]:
+    """
+    Tự động đọc số đo token thật từ file `transcript.jsonl` chuẩn của Antigravity IDE
+    (`~/.gemini/antigravity/brain/<conversation-id>/.system_generated/logs/transcript.jsonl`):
+    - Chỉ khớp chính xác hội thoại chứa `sid` và cộng các lượt `PLANNER_RESPONSE` trong khung giờ `[started_at, ended_at]`.
+    - Nếu không tìm thấy log (vd: chạy CI/headless/test) -> trả `None` (tuyệt đối không bịa số).
+    """
+    if not sid:
+        return None
+    env_dir = os.environ.get("ANTIGRAVITY_BRAIN_DIR")
+    root_brain = brain_dir or (Path(env_dir).expanduser() if env_dir else (Path.home() / ".gemini" / "antigravity" / "brain"))
+    if not root_brain.is_dir():
+        return None
+
+    start_ms = _parse_iso_ms(started_at)
+    end_ms = _parse_iso_ms(ended_at) if ended_at else None
+    min_mtime_s = (start_ms / 1000.0 - 120.0) if start_ms is not None else 0.0
+
+    matched_transcript: Optional[Path] = None
+    try:
+        candidates = sorted(
+            root_brain.glob("*/.system_generated/logs/transcript.jsonl"),
+            key=lambda p: p.stat().st_mtime if p.is_file() else 0.0,
+            reverse=True,
+        )
+    except OSError:
+        return None
+
+    for cand in candidates[:40]:
+        try:
+            if not cand.is_file():
+                continue
+            if start_ms is not None and cand.stat().st_mtime < min_mtime_s:
+                continue
+            raw_text = cand.read_text(encoding="utf-8", errors="ignore")
+            if sid in raw_text:
+                matched_transcript = cand
+                break
+        except OSError:
+            continue
+
+    if matched_transcript is None:
+        return None
+
+    import json
+
+    window_start = (start_ms - 15_000) if start_ms is not None else None
+    window_end = (end_ms + 15_000) if end_ms is not None else None
+    by_model: Dict[str, Dict[str, Any]] = {}
+
+    try:
+        for line in matched_transcript.read_text(encoding="utf-8", errors="ignore").splitlines():
+            if "PLANNER_RESPONSE" not in line or "input_tokens" not in line:
+                continue
+            try:
+                obj = json.loads(line)
+            except Exception:
+                continue
+            if obj.get("type") != "PLANNER_RESPONSE":
+                continue
+            ts_ms = _parse_iso_ms(obj.get("created_at"))
+            if ts_ms is not None:
+                if window_start is not None and ts_ms < window_start:
+                    continue
+                if window_end is not None and ts_ms > window_end:
+                    continue
+            fresh_in = int(obj.get("input_tokens") or 0)
+            cached_in = int(obj.get("cache_read_tokens") or 0)
+            out_tok = int(obj.get("output_tokens") or 0)
+            if fresh_in == 0 and cached_in == 0 and out_tok == 0:
+                continue
+            model_name = str(obj.get("model") or "unknown")
+            bucket = by_model.setdefault(
+                model_name,
+                {
+                    "agent": "antigravity",
+                    "model": model_name,
+                    "input_tokens": 0,
+                    "cached_input_tokens": 0,
+                    "output_tokens": 0,
+                    "request_count": 0,
+                },
+            )
+            # Antigravity transcript tách riêng input_tokens (fresh) và cache_read_tokens (cached)
+            bucket["input_tokens"] += fresh_in + cached_in
+            bucket["cached_input_tokens"] += cached_in
+            bucket["output_tokens"] += out_tok
+            bucket["request_count"] += 1
+    except OSError:
+        return None
+
+    return list(by_model.values()) if by_model else None
 
 
 def start_audit(
@@ -646,6 +754,17 @@ def finalize_audit(
     time_perf["tool_time_ms"] = sum(sum_tool) if sum_tool else None
 
     usage_cost = f04["usage_cost"]
+    if not measured_usage:
+        sid_val = str(f01.get("task_identity", {}).get("run_id") or "")
+        auto_usage = collect_antigravity_transcript_usage(
+            sid=sid_val,
+            started_at=f01.get("task_identity", {}).get("started_at"),
+            ended_at=now,
+        )
+        if auto_usage:
+            measured_usage = auto_usage
+            usage_source = "antigravity_transcript"
+
     if measured_usage and usage_source:
         non_dup = [u for u in measured_usage if not u.get("included_in_parent")]
         in_tok = sum(int(u.get("input_tokens") or 0) for u in non_dup)
@@ -670,18 +789,20 @@ def finalize_audit(
             usage_cost["missing_metrics"] = [
                 m for m in usage_cost["missing_metrics"] if m not in {"model_cost", "total_estimated_cost"}
             ]
-        f02["execution_trace"]["steps"] = [
-            {
-                "step_index": i + 1,
-                "agent": sanitize_text(u.get("agent"), max_len=60),
-                "model": sanitize_text(u.get("model"), max_len=80),
-                "input_tokens": int(u.get("input_tokens") or 0),
-                "cached_tokens": int(u.get("cached_input_tokens") or 0),
-                "output_tokens": int(u.get("output_tokens") or 0),
-                "included_in_parent": bool(u.get("included_in_parent", False)),
-            }
-            for i, u in enumerate(measured_usage)
-        ]
+        if not f02["execution_trace"].get("steps"):
+            f02["execution_trace"]["steps"] = [
+                {
+                    "step_index": i + 1,
+                    "agent": sanitize_text(u.get("agent"), max_len=60),
+                    "model": sanitize_text(u.get("model"), max_len=80),
+                    "input_tokens": int(u.get("input_tokens") or 0),
+                    "cached_tokens": int(u.get("cached_input_tokens") or 0),
+                    "output_tokens": int(u.get("output_tokens") or 0),
+                    "request_count": int(u.get("request_count") or 1),
+                    "included_in_parent": bool(u.get("included_in_parent", False)),
+                }
+                for i, u in enumerate(measured_usage)
+            ]
     else:
         usage_cost["source"] = "not_measured"
 

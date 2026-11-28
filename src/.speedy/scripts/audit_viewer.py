@@ -18,7 +18,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from audit import AUDIT_FILENAMES, is_audit_enabled, sanitize_text
+from audit import (
+    AUDIT_FILENAMES,
+    _compute_reference_cost,
+    _load_pricing,
+    collect_antigravity_transcript_usage,
+    is_audit_enabled,
+    sanitize_text,
+)
 from contracts import ErrorCode, SpeedyError, WorkspaceLayout, resolve_within_scope
 from storage import atomic_write_bytes
 
@@ -248,7 +255,44 @@ def _enrich_from_session_state(run: Dict[str, Any], sessions_dir: Optional[Path]
                 run["build_status"] = lstatus.lower()
 
 
-def load_runs(audit_root: Path, sessions_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+def _enrich_from_antigravity_transcript(run: Dict[str, Any], layout: Optional[WorkspaceLayout]) -> None:
+    """Làm giàu chỉ đọc số đo token & chi phí thật từ `transcript.jsonl` cho các phiên chưa ghi usage vào 04-cost-time.json."""
+    if run.get("total_tokens") is not None:
+        return
+    usage_items = collect_antigravity_transcript_usage(
+        sid=str(run.get("run_id") or ""),
+        started_at=run.get("started_at"),
+        ended_at=run.get("ended_at"),
+    )
+    if not usage_items:
+        return
+    in_tok = sum(int(u.get("input_tokens") or 0) for u in usage_items)
+    cached_tok = sum(int(u.get("cached_input_tokens") or 0) for u in usage_items)
+    out_tok = sum(int(u.get("output_tokens") or 0) for u in usage_items)
+    run["input_tokens"] = in_tok
+    run["cached_input_tokens"] = cached_tok
+    run["output_tokens"] = out_tok
+    run["total_tokens"] = in_tok + out_tok
+    run["source"] = "antigravity_transcript"
+    if layout is not None:
+        pricing = _load_pricing(layout)
+        cost_res = _compute_reference_cost(usage_items, pricing)
+        if cost_res["total_cost"] is not None:
+            run["cost"] = cost_res["total_cost"]
+            run["currency"] = "USD"
+    # Ghi nhận model thật nếu chưa có
+    models_map = run.setdefault("models_by_agent", {})
+    for u in usage_items:
+        m = u.get("model")
+        if m and m not in models_map.values():
+            models_map.setdefault("antigravity", str(m))
+
+
+def load_runs(
+    audit_root: Path,
+    sessions_dir: Optional[Path] = None,
+    layout: Optional[WorkspaceLayout] = None,
+) -> List[Dict[str, Any]]:
     if not audit_root.is_dir():
         return []
     runs: List[Dict[str, Any]] = []
@@ -338,6 +382,7 @@ def load_runs(audit_root: Path, sessions_dir: Optional[Path] = None) -> List[Dic
             "missing_metrics": sorted(set(missing_metrics)),
         }
         _enrich_from_session_state(run_entry, sessions_dir)
+        _enrich_from_antigravity_transcript(run_entry, layout)
         runs.append(run_entry)
     return runs
 
@@ -624,7 +669,7 @@ def render_audit_dashboard(
     )
 
     enabled = is_audit_enabled(layout)
-    all_runs = load_runs(audit_root, sessions_dir=layout.sessions_dir) if enabled else []
+    all_runs = load_runs(audit_root, sessions_dir=layout.sessions_dir, layout=layout) if enabled else []
     selected = [r for r in all_runs if r.get("month") == target_month]
 
     if not enabled:

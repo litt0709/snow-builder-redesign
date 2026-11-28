@@ -15,6 +15,9 @@
       "aliases": [
         "hydrogen",
         "gemini-4-hydrogen",
+        "gemini-4-hydrogen-low",
+        "gemini-4-hydrogen-medium",
+        "gemini-4-hydrogen-high",
         "gemini-flash-lite",
         "gemini-2.5-flash-lite"
       ],
@@ -34,6 +37,9 @@
       "aliases": [
         "neon",
         "gemini-4-neon",
+        "gemini-4-neon-low",
+        "gemini-4-neon-medium",
+        "gemini-4-neon-high",
         "gemini-flash",
         "gemini-2.5-flash"
       ],
