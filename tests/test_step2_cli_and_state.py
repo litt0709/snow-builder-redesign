@@ -588,7 +588,22 @@ class TestStep2CliAndStateMachine(unittest.TestCase):
             self.assertIn("knowledge_master_index", ref_kinds)
             self.assertTrue(any(d["path"].endswith("opensubsonic-api.md") for d in pkt["doc_matches"]))
 
-            # 5. AC-005: hoàn tất stage docs tự động refresh repomap & knowledge index
+            # 5. AC-005: hoàn tất stage docs tự động refresh repomap & knowledge index + kiểm tra docs-view Human Reading Lens
+            (ws / "ai-workspace" / "docs" / "architecture" / "opensubsonic-api.md").write_text(
+                "# OpenSubsonic Streaming API\n\n<!-- auto-generated -->\nTags: opensubsonic, stream\n\n"
+                "## Zero-Egress 302 Redirect\nStream audio directly from Drive.\n\n"
+                "- `source_ref`: `functions/src/subsonic/opensubsonic.ts` | `sha256`: `0123456789abcdef`\n",
+                encoding="utf-8",
+            )
+            _run_cli(ws, "knowledge", "index")
+            dv_res = json.loads(_run_cli(ws, "docs-view", "--no-open").stdout)
+            dv_html = Path(dv_res["path"]).read_text(encoding="utf-8")
+            self.assertIn('id="toc-search"', dv_html)
+            self.assertIn('class="doc-tag">opensubsonic</span>', dv_html)
+            self.assertIn('class="source-refs"', dv_html)
+            self.assertIn('href="#file-architecture-opensubsonic-api"', dv_html)
+            self.assertNotIn("<!-- auto-generated -->", dv_html)
+
             state_path = ws / "ai-workspace" / "sessions" / s_out["sid"] / "state.json"
             st = json.loads(state_path.read_text(encoding="utf-8"))
             for prev in ("bootstrap", "root_cause", "analyst", "architect", "implementer", "reviewer", "tester"):

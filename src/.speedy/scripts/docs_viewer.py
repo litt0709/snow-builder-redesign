@@ -29,6 +29,48 @@ HR_RE = re.compile(r"\s{0,3}([-*_])(?:\s*\1){2,}\s*")
 IMAGE_RE = re.compile(r'!\[([^\]]*)\]\(([^\s)]+)(?:\s+"[^"]*")?\)')
 LINK_RE = re.compile(r'(?<!!)\[([^\]]+)\]\(([^\s)]+)(?:\s+"[^"]*")?\)')
 CODE_RE = re.compile(r"`([^`]+)`")
+HTML_COMMENT_RE = re.compile(r"^\s*<!--.*?-->\s*$")
+TAGS_LINE_RE = re.compile(r"^\s*(?:[-*]\s*)?(?:\*\*)?(?:tags|keywords)(?:\*\*)?\s*:\s*(.+)$", re.IGNORECASE)
+SOURCE_REF_LINE_RE = re.compile(
+    r"^\s*[-*]\s*`?source_ref`?\s*:\s*`?([^|`\n]+)`?\s*\|\s*`?sha256`?\s*:\s*`?([a-fA-F0-9]{8,64})`?\s*$",
+    re.IGNORECASE,
+)
+
+_DIR_PRIORITY = {
+    "guides": 1,
+    "architecture": 2,
+    "development-rules": 3,
+    "development-style": 4,
+    "reference": 5,
+    "cross-repo": 6,
+}
+
+
+def _human_sort_key(rel_posix: str) -> Tuple[int, int, str]:
+    low = rel_posix.lower()
+    if low == "index.md":
+        return (0, 0, low)
+    if low in {"architecture/overview.md", "overview.md", "readme.md"}:
+        return (0, 1, low)
+    if low == "guides/quickstart.md":
+        return (1, 0, low)
+    if low.startswith("guides/"):
+        return (1, 1, low)
+    if low == "architecture/architecture.md":
+        return (2, 0, low)
+    if low.startswith("architecture/"):
+        return (2, 1, low)
+    if low.startswith("development-rules/"):
+        return (3, 0, low)
+    if low.startswith("development-style/"):
+        return (4, 0, low)
+    if low.startswith("reference/"):
+        return (5, 0, low)
+    if low.startswith("cross-repo/"):
+        return (6, 0, low)
+    if low == "changelog.md":
+        return (9, 0, low)
+    return (7, 0, low)
 
 FOLDER_ICON = (
     '<svg class="toc-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" '
@@ -60,26 +102,38 @@ def _slugify(text: str, seen: Dict[str, int]) -> str:
     return base if cnt == 0 else f"{base}-{cnt + 1}"
 
 
-def _safe_url(raw_url: str, source_dir: Path, output_dir: Path) -> str:
+def _safe_url(
+    raw_url: str,
+    source_dir: Path,
+    output_dir: Path,
+    doc_id_map: Optional[Dict[Path, str]] = None,
+) -> str:
     parts = urlsplit(raw_url)
     if parts.scheme.lower() in {"javascript", "vbscript", "data"}:
         return "#"
     if parts.scheme or raw_url.startswith(("#", "/", "//")):
         return html.escape(raw_url, quote=True)
     target = (source_dir / parts.path).resolve()
+    if doc_id_map and target in doc_id_map:
+        return f"#{doc_id_map[target]}"
     relative = Path(os.path.relpath(str(target), str(output_dir))).as_posix()
     return html.escape(urlunsplit(("", "", relative, parts.query, parts.fragment)), quote=True)
 
 
-def _render_inline(text: str, source_dir: Path, output_dir: Path) -> str:
+def _render_inline(
+    text: str,
+    source_dir: Path,
+    output_dir: Path,
+    doc_id_map: Optional[Dict[Path, str]] = None,
+) -> str:
     escaped = html.escape(text, quote=False)
 
     def _image(match: re.Match) -> str:
-        url = _safe_url(html.unescape(match.group(2)), source_dir, output_dir)
+        url = _safe_url(html.unescape(match.group(2)), source_dir, output_dir, doc_id_map)
         return f'<img src="{url}" alt="{match.group(1)}">'
 
     def _link(match: re.Match) -> str:
-        url = _safe_url(html.unescape(match.group(2)), source_dir, output_dir)
+        url = _safe_url(html.unescape(match.group(2)), source_dir, output_dir, doc_id_map)
         return f'<a href="{url}">{match.group(1)}</a>'
 
     escaped = IMAGE_RE.sub(_image, escaped)
@@ -125,8 +179,35 @@ def _render_md_body(
     source_dir: Path,
     output_dir: Path,
     seen_ids: Dict[str, int],
-) -> Tuple[str, List[Tuple[int, str, str]]]:
-    lines = markdown.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    doc_id_map: Optional[Dict[Path, str]] = None,
+) -> Tuple[str, List[Tuple[int, str, str]], List[str], List[Tuple[str, str]]]:
+    raw_lines = markdown.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    lines: List[str] = []
+    tags: List[str] = []
+    source_refs: List[Tuple[str, str]] = []
+    in_fence = False
+    for line_idx, raw_line in enumerate(raw_lines):
+        if FENCE_RE.match(raw_line):
+            in_fence = not in_fence
+            lines.append(raw_line)
+            continue
+        if not in_fence:
+            if HTML_COMMENT_RE.match(raw_line):
+                continue
+            sr_m = SOURCE_REF_LINE_RE.match(raw_line)
+            if sr_m:
+                source_refs.append((sr_m.group(1).strip(), sr_m.group(2).strip()))
+                continue
+            if line_idx < 15:
+                tg_m = TAGS_LINE_RE.match(raw_line)
+                if tg_m:
+                    for part in re.split(r"[,;|]+", tg_m.group(1)):
+                        cleaned = part.strip().strip("`*_")
+                        if cleaned and cleaned not in tags:
+                            tags.append(cleaned)
+                    continue
+        lines.append(raw_line)
+
     out: List[str] = []
     headings: List[Tuple[int, str, str]] = []
     idx = 0
@@ -160,7 +241,7 @@ def _render_md_body(
             lvl = len(hd.group(1))
             title = hd.group(2)
             hid = _slugify(title, seen_ids)
-            out.append(f'<h{lvl} id="{hid}">{_render_inline(title, source_dir, output_dir)}</h{lvl}>')
+            out.append(f'<h{lvl} id="{hid}">{_render_inline(title, source_dir, output_dir, doc_id_map)}</h{lvl}>')
             headings.append((lvl, hid, title))
             idx += 1
             continue
@@ -177,9 +258,9 @@ def _render_md_body(
             while idx < len(lines) and "|" in lines[idx] and lines[idx].strip():
                 rows.append(_table_cells(lines[idx]))
                 idx += 1
-            thead = "".join(f"<th>{_render_inline(h, source_dir, output_dir)}</th>" for h in headers)
+            thead = "".join(f"<th>{_render_inline(h, source_dir, output_dir, doc_id_map)}</th>" for h in headers)
             tbody = "".join(
-                "<tr>" + "".join(f"<td>{_render_inline(c, source_dir, output_dir)}</td>" for c in r) + "</tr>"
+                "<tr>" + "".join(f"<td>{_render_inline(c, source_dir, output_dir, doc_id_map)}</td>" for c in r) + "</tr>"
                 for r in rows
             )
             out.append(f'<div class="tablewrap"><table><thead><tr>{thead}</tr></thead><tbody>{tbody}</tbody></table></div>')
@@ -196,7 +277,7 @@ def _render_md_body(
                 if not m:
                     break
                 item_text = m.group(2) if tag == "ul" else m.group(1)
-                items.append(f"<li>{_render_inline(item_text, source_dir, output_dir)}</li>")
+                items.append(f"<li>{_render_inline(item_text, source_dir, output_dir, doc_id_map)}</li>")
                 idx += 1
             out.append(f"<{tag}>{''.join(items)}</{tag}>")
             continue
@@ -204,7 +285,7 @@ def _render_md_body(
         if line.startswith(">"):
             quotes: List[str] = []
             while idx < len(lines) and lines[idx].startswith(">"):
-                quotes.append(_render_inline(lines[idx][1:].lstrip(), source_dir, output_dir))
+                quotes.append(_render_inline(lines[idx][1:].lstrip(), source_dir, output_dir, doc_id_map))
                 idx += 1
             out.append(f"<blockquote><p>{'<br>'.join(quotes)}</p></blockquote>")
             continue
@@ -214,9 +295,9 @@ def _render_md_body(
         while idx < len(lines) and lines[idx].strip() and not _is_block_start(lines, idx):
             paragraph.append(lines[idx].strip())
             idx += 1
-        out.append(f"<p>{_render_inline(' '.join(paragraph), source_dir, output_dir)}</p>")
+        out.append(f"<p>{_render_inline(' '.join(paragraph), source_dir, output_dir, doc_id_map)}</p>")
 
-    return "\n".join(out), headings
+    return "\n".join(out), headings, tags, source_refs
 
 
 def _render_document(
@@ -224,16 +305,23 @@ def _render_document(
     docs_dir: Path,
     output_dir: Path,
     seen_ids: Dict[str, int],
-) -> Tuple[str, str, List[Tuple[int, str, str]]]:
+    file_id: str,
+    doc_id_map: Dict[Path, str],
+) -> Tuple[str, List[Tuple[int, str, str]], List[str]]:
     rel = doc_path.relative_to(docs_dir).as_posix()
-    file_id = _slugify(f"file-{rel[:-3].replace('/', '-')}", seen_ids)
-    body, headings = _render_md_body(
+    body, headings, tags, source_refs = _render_md_body(
         doc_path.read_text(encoding="utf-8", errors="replace"),
         doc_path.parent,
         output_dir,
         seen_ids,
+        doc_id_map,
     )
     title_formatted = html.escape(rel[:-3].upper().replace("/", " / "))
+
+    tags_html = ""
+    if tags:
+        pills = "".join(f'<span class="doc-tag">{html.escape(t)}</span>' for t in tags[:10])
+        tags_html = f'<div class="doc-tags">{pills}</div>'
 
     toc_links: List[str] = []
     for lvl, hid, htext in headings:
@@ -250,14 +338,27 @@ def _render_document(
             "</div>"
         )
 
+    refs_html = ""
+    if source_refs:
+        ref_items = "".join(
+            f"<li><code>{html.escape(src)}</code> <span>({html.escape(sha)})</span></li>"
+            for src, sha in source_refs
+        )
+        refs_html = (
+            '<details class="source-refs">'
+            f"<summary>📎 Nguồn mã đối chiếu ({len(source_refs)})</summary>"
+            f"<ul>{ref_items}</ul>"
+            "</details>"
+        )
+
     header_html = (
         '<div class="doc-header">'
         f'<p class="meta">{html.escape(rel)}</p>'
         f'<h1 id="{file_id}">{title_formatted}</h1>'
-        f"{doc_toc_html}"
+        f"{tags_html}{doc_toc_html}"
         "</div>"
     )
-    return f'<section class="document">{header_html}{body}</section>', file_id, headings
+    return f'<section class="document">{header_html}{body}{refs_html}</section>', headings, tags
 
 
 def _build_toc_html(doc_infos: List[Dict[str, Any]]) -> str:
@@ -273,7 +374,35 @@ def _build_toc_html(doc_infos: List[Dict[str, Any]]) -> str:
 
     def _render_node(node: Dict[str, Any]) -> str:
         parts_html: List[str] = []
-        for dir_name, sub_node in sorted(node["dirs"].items()):
+        # Root-level priority files (e.g., INDEX.md) before subfolders, CHANGELOG.md after
+        top_files = [i for i in node["files"] if i["relative_path"].lower() != "changelog.md"]
+        tail_files = [i for i in node["files"] if i["relative_path"].lower() == "changelog.md"]
+
+        def _render_file(info: Dict[str, Any]) -> str:
+            file_name = info["relative_path"].split("/")[-1]
+            file_title = html.escape(file_name[:-3] if file_name.endswith(".md") else file_name)
+            file_id = info["file_id"]
+            search_blob = " ".join(
+                [
+                    info["relative_path"],
+                    info.get("title", ""),
+                    " ".join(h[2] for h in info.get("headings", [])),
+                    " ".join(info.get("tags", [])),
+                ]
+            ).lower()
+            return (
+                f'<div class="toc-file" data-search="{html.escape(search_blob, quote=True)}">'
+                f'<a href="#{file_id}" class="toc-file-link">{FILE_ICON}<span>{file_title}</span></a>'
+                "</div>"
+            )
+
+        for info in top_files:
+            parts_html.append(_render_file(info))
+
+        for dir_name, sub_node in sorted(
+            node["dirs"].items(),
+            key=lambda kv: (_DIR_PRIORITY.get(kv[0].lower(), 7), kv[0].lower()),
+        ):
             content_html = _render_node(sub_node)
             parts_html.append(
                 '<details class="toc-folder" open>'
@@ -281,15 +410,10 @@ def _build_toc_html(doc_infos: List[Dict[str, Any]]) -> str:
                 f'<div class="toc-folder-content">{content_html}</div>'
                 "</details>"
             )
-        for info in node["files"]:
-            file_name = info["relative_path"].split("/")[-1]
-            file_title = html.escape(file_name[:-3] if file_name.endswith(".md") else file_name)
-            file_id = info["file_id"]
-            parts_html.append(
-                '<div class="toc-file">'
-                f'<a href="#{file_id}" class="toc-file-link">{FILE_ICON}<span>{file_title}</span></a>'
-                "</div>"
-            )
+
+        for info in tail_files:
+            parts_html.append(_render_file(info))
+
         return "".join(parts_html)
 
     return _render_node(root_node)
@@ -318,6 +442,14 @@ nav.toc summary:hover { color:var(--accent-ink); background:var(--surface); }
 .toc-file-link:hover { color:var(--fg); background:var(--surface); }
 .toc-file-link.on { color:var(--accent-ink); border-left-color:var(--accent); font-weight:700; background:var(--surface); }
 .toc-icon { opacity:0.7; flex-shrink:0; }
+.toc-search { width:100%; padding:6px 10px; margin:0 0 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--fg); font-size:12px; outline:none; }
+.toc-search:focus { border-color:var(--accent); }
+.doc-tags { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 12px; }
+.doc-tag { background:var(--code-bg); color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:1px 9px; font-size:11px; font-weight:600; }
+.source-refs { margin-top:24px; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 14px; font-size:12px; color:var(--muted); }
+.source-refs summary { cursor:pointer; font-weight:600; user-select:none; }
+.source-refs ul { margin:8px 0 4px; padding-left:18px; }
+.source-refs li { margin:2px 0; }
 .doc-header { margin-bottom:32px; padding-bottom:16px; border-bottom:1px solid var(--line); }
 .doc-header h1 { font-size:24px; font-weight:800; letter-spacing:.03em; margin:4px 0 16px; color:var(--fg); }
 .doc-toc { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px 16px; margin:16px 0 4px; }
@@ -366,7 +498,7 @@ tbody tr:last-child td { border-bottom:0 }
 </head>
 <body>
 <div class="shell">
-  <nav class="toc" aria-label="Table of contents"><p>CONTENTS</p>{toc}</nav>
+  <nav class="toc" aria-label="Table of contents"><p>CONTENTS</p><input type="search" class="toc-search" id="toc-search" placeholder="Lọc tài liệu / từ khóa..." aria-label="Lọc tài liệu">{toc}</nav>
   <main>{content}</main>
 </div>
 <div class="mermaid-modal" id="mermaid-modal">
@@ -397,6 +529,21 @@ const io = new IntersectionObserver(entries => {
   }
 }, { rootMargin: '0px 0px -75% 0px' });
 document.querySelectorAll('main h1[id]').forEach(target => io.observe(target));
+const searchInput = document.getElementById('toc-search');
+if (searchInput) {
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    document.querySelectorAll('.toc-file').forEach(el => {
+      const hay = el.dataset.search || '';
+      el.style.display = (!q || hay.includes(q)) ? '' : 'none';
+    });
+    document.querySelectorAll('.toc-folder').forEach(folder => {
+      const visible = [...folder.querySelectorAll('.toc-file')].some(el => el.style.display !== 'none');
+      folder.style.display = (!q || visible) ? '' : 'none';
+      if (q && visible) folder.open = true;
+    });
+  });
+}
 </script>
 {mermaid_block}
 </body>
@@ -496,10 +643,18 @@ def render_docs_site(
             if not any(part in HIDDEN_PARTS or part.startswith(".") for part in p.relative_to(target_docs).parts)
             and p.resolve() != out_file.resolve()
         ],
-        key=lambda p: p.relative_to(target_docs).as_posix(),
+        key=lambda p: _human_sort_key(p.relative_to(target_docs).as_posix()),
     )
 
     seen_ids: Dict[str, int] = {}
+    doc_id_map: Dict[Path, str] = {}
+    file_ids: List[str] = []
+    for md in md_files:
+        rel = md.relative_to(target_docs).as_posix()
+        fid = _slugify(f"file-{rel[:-3].replace('/', '-')}", seen_ids)
+        doc_id_map[md.resolve()] = fid
+        file_ids.append(fid)
+
     doc_infos: List[Dict[str, Any]] = []
     sections: List[str] = []
 
@@ -507,16 +662,17 @@ def render_docs_site(
         sections.append('<section class="document"><p class="empty">Chưa có tài liệu Markdown nào trong thư mục này.</p></section>')
         toc_html = '<p class="empty">Chưa có mục lục.</p>'
     else:
-        for md in md_files:
-            rendered, file_id, headings = _render_document(md, target_docs, out_file.parent, seen_ids)
+        for md, fid in zip(md_files, file_ids):
+            rendered, headings, tags = _render_document(md, target_docs, out_file.parent, seen_ids, fid, doc_id_map)
             sections.append(rendered)
             rel = md.relative_to(target_docs).as_posix()
             doc_infos.append(
                 {
                     "relative_path": rel,
-                    "file_id": file_id,
+                    "file_id": fid,
                     "title": rel[:-3],
                     "headings": headings,
+                    "tags": tags,
                 }
             )
         toc_html = _build_toc_html(doc_infos)
