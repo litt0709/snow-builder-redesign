@@ -101,19 +101,19 @@ def _safe(val: Any) -> str:
     return html.escape(str(val), quote=True)
 
 
-def _fmt_num(val: Any) -> str:
+def _fmt_num(val: Any, fallback: str = "N/A") -> str:
     num = _number(val)
     if num is None:
-        return "null"
+        return fallback
     if num.is_integer():
         return f"{int(num):,}"
     return f"{num:,.4f}".rstrip("0").rstrip(".")
 
 
-def _fmt_ms(ms: Any) -> str:
+def _fmt_ms(ms: Any, fallback: str = "N/A") -> str:
     num = _number(ms)
     if num is None:
-        return "null"
+        return fallback
     sec = int(num / 1000)
     if sec < 60:
         return f"{sec}s"
@@ -124,10 +124,10 @@ def _fmt_ms(ms: Any) -> str:
     return f"{h}h {m}m"
 
 
-def _fmt_cost(val: Any, currency: Any = None) -> str:
+def _fmt_cost(val: Any, currency: Any = None, fallback: str = "N/A") -> str:
     num = _number(val)
     if num is None:
-        return "null"
+        return fallback
     prefix = "$" if not currency or str(currency).upper() == "USD" else f"{html.escape(str(currency))} "
     return f"{prefix}{num:.4f}"
 
@@ -173,7 +173,82 @@ def _models_by_agent(f01: Dict[str, Any], f04: Dict[str, Any], f02: Dict[str, An
     return models
 
 
-def load_runs(audit_root: Path) -> List[Dict[str, Any]]:
+def _enrich_from_session_state(run: Dict[str, Any], sessions_dir: Optional[Path]) -> None:
+    """Làm giàu chỉ đọc từ `sessions/<sid>/state.json` cho các phiên cũ chưa ghi đầy đủ telemetry vào audit/."""
+    if not sessions_dir or not sessions_dir.is_dir():
+        return
+    sid = str(run.get("run_id") or "")
+    if not sid:
+        return
+    st_path = sessions_dir / sid / "state.json"
+    st = _read_dict_tolerant(st_path)
+    if not st:
+        return
+
+    from policy import select_gemini_model
+
+    stages = st.get("stages") or {}
+    route = st.get("route") or list(stages.keys())
+    high_risk = bool(st.get("high_risk"))
+
+    # 1. Enrich models_by_agent nếu trống
+    if not run.get("models_by_agent"):
+        inferred_models: Dict[str, str] = {}
+        for st_name in route:
+            info = stages.get(st_name)
+            if isinstance(info, dict) and info.get("status") not in {None, "pending", "skipped"}:
+                inferred_models[st_name] = select_gemini_model(st_name, high_risk=high_risk)["model"]
+        if inferred_models:
+            run["models_by_agent"] = inferred_models
+
+    # 2. Enrich steps từ state.stages nếu trống hoặc chỉ có 1 event audit_start
+    existing_steps = run.get("steps") or []
+    only_start_step = len(existing_steps) == 1 and str(existing_steps[0].get("agent")) == "orchestrator"
+    if not existing_steps or only_start_step:
+        synth_steps: List[Dict[str, Any]] = []
+        prev_ts = st.get("created_at")
+        for st_name in route:
+            info = stages.get(st_name)
+            if not isinstance(info, dict):
+                continue
+            st_status = info.get("status")
+            if st_status in {None, "pending"}:
+                continue
+            cur_ts = info.get("updated_at")
+            dur = _duration_from_ts(prev_ts, cur_ts)
+            if cur_ts:
+                prev_ts = cur_ts
+            synth_steps.append(
+                {
+                    "agent": st_name,
+                    "model": select_gemini_model(st_name, high_risk=high_risk)["model"],
+                    "duration_ms": dur,
+                    "note": str(st_status),
+                }
+            )
+        if synth_steps:
+            run["steps"] = synth_steps
+
+    # 3. Enrich wall_ms nếu thiếu
+    if run.get("wall_ms") is None:
+        run["wall_ms"] = _duration_from_ts(st.get("created_at"), st.get("updated_at"))
+
+    # 4. Enrich unit_test & build_status từ state.verification
+    verifications = st.get("verification") or []
+    if verifications and isinstance(verifications[-1], dict):
+        latest_v = verifications[-1]
+        for layer in latest_v.get("layers") or []:
+            if not isinstance(layer, dict):
+                continue
+            lname = layer.get("layer")
+            lstatus = str(layer.get("status") or "")
+            if lname == "unit_integration" and lstatus != "NOT_APPLICABLE" and not run.get("unit_test"):
+                run["unit_test"] = lstatus.lower()
+            elif lname == "build" and lstatus != "NOT_APPLICABLE" and not run.get("build_status"):
+                run["build_status"] = lstatus.lower()
+
+
+def load_runs(audit_root: Path, sessions_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
     if not audit_root.is_dir():
         return []
     runs: List[Dict[str, Any]] = []
@@ -223,46 +298,47 @@ def load_runs(audit_root: Path) -> List[Dict[str, Any]]:
                 if isinstance(ev, dict)
             ]
 
-        runs.append(
-            {
-                "folder": run_dir.name,
-                "path": str(run_dir),
-                "month": month,
-                "run_id": _first(ident.get("run_id"), final_summary.get("run_id"), run_dir.name),
-                "task_id": _first(ident.get("task_id"), final_summary.get("task_id"), run_dir.name),
-                "jira_ticket": _first(ident.get("jira_ticket"), final_summary.get("jira_ticket")),
-                "command_ref": _first(ident.get("command_ref")),
-                "description": sanitize_text(ident.get("sanitized_task_description"), max_len=400),
-                "started_at": started,
-                "ended_at": ended,
-                "outcome": _first(out.get("outcome"), final_summary.get("outcome"), default="partial"),
-                "completion_level": _first(out.get("completion_level"), final_summary.get("completion_level"), default="claimed"),
-                "input_tokens": _int_or_none(usage.get("input_tokens")),
-                "cached_input_tokens": _int_or_none(usage.get("cached_input_tokens")),
-                "output_tokens": _int_or_none(usage.get("output_tokens")),
-                "reasoning_tokens": _int_or_none(usage.get("reasoning_tokens")),
-                "total_tokens": _int_or_none(usage.get("total_tokens")),
-                "cost": _number(usage.get("total_estimated_cost")),
-                "currency": "USD" if usage.get("currency_pricing_source") or usage.get("total_estimated_cost") is not None else None,
-                "source": usage.get("source") or "not_measured",
-                "wall_ms": _int_or_none(duration_ms),
-                "human_wait_ms": _int_or_none(tperf.get("human_wait_ms")),
-                "model_time_ms": _int_or_none(tperf.get("model_time_ms")),
-                "tool_time_ms": _int_or_none(tperf.get("tool_time_ms")),
-                "models_by_agent": _models_by_agent(f01, f04, f02),
-                "events": events if isinstance(events, list) else [],
-                "steps": steps if isinstance(steps, list) else [],
-                "tool_call_count": _get(f02, "execution_trace", "tool_call_count"),
-                "files_changed": _first(repo_changes.get("files_changed"), final_summary.get("files_changed")),
-                "change_measurement_status": _first(repo_changes.get("change_measurement_status"), default="not_measured"),
-                "unit_test": _first(_get(qual, "unit_test_result", "status")),
-                "build_status": _first(qual.get("build_status")),
-                "security_scan": _first(_get(qual, "security_scan_result", "status")),
-                "ac_passed": qual.get("acceptance_criteria_passed"),
-                "ac_total": qual.get("acceptance_criteria_total"),
-                "missing_metrics": sorted(set(missing_metrics)),
-            }
-        )
+        run_entry = {
+            "folder": run_dir.name,
+            "path": str(run_dir),
+            "month": month,
+            "run_id": _first(ident.get("run_id"), final_summary.get("run_id"), run_dir.name),
+            "task_id": _first(ident.get("task_id"), final_summary.get("task_id"), run_dir.name),
+            "jira_ticket": _first(ident.get("jira_ticket"), final_summary.get("jira_ticket")),
+            "command_ref": _first(ident.get("command_ref")),
+            "description": sanitize_text(ident.get("sanitized_task_description"), max_len=400),
+            "started_at": started,
+            "ended_at": ended,
+            "outcome": _first(out.get("outcome"), final_summary.get("outcome"), default="partial"),
+            "completion_level": _first(out.get("completion_level"), final_summary.get("completion_level"), default="claimed"),
+            "input_tokens": _int_or_none(usage.get("input_tokens")),
+            "cached_input_tokens": _int_or_none(usage.get("cached_input_tokens")),
+            "output_tokens": _int_or_none(usage.get("output_tokens")),
+            "reasoning_tokens": _int_or_none(usage.get("reasoning_tokens")),
+            "total_tokens": _int_or_none(usage.get("total_tokens")),
+            "cost": _number(usage.get("total_estimated_cost")),
+            "currency": "USD" if usage.get("currency_pricing_source") or usage.get("total_estimated_cost") is not None else None,
+            "source": usage.get("source") or "not_measured",
+            "wall_ms": _int_or_none(duration_ms),
+            "human_wait_ms": _int_or_none(tperf.get("human_wait_ms")),
+            "model_time_ms": _int_or_none(tperf.get("model_time_ms")),
+            "tool_time_ms": _int_or_none(tperf.get("tool_time_ms")),
+            "models_by_agent": _models_by_agent(f01, f04, f02),
+            "events": events if isinstance(events, list) else [],
+            "steps": steps if isinstance(steps, list) else [],
+            "tool_call_count": _get(f02, "execution_trace", "tool_call_count"),
+            "files_changed": _first(repo_changes.get("files_changed"), final_summary.get("files_changed")),
+            "change_measurement_status": _first(repo_changes.get("change_measurement_status"), default="not_measured"),
+            "changed_file_paths": repo_changes.get("changed_file_paths") or [],
+            "unit_test": _first(_get(qual, "unit_test_result", "status")),
+            "build_status": _first(qual.get("build_status")),
+            "security_scan": _first(_get(qual, "security_scan_result", "status")),
+            "ac_passed": qual.get("acceptance_criteria_passed"),
+            "ac_total": qual.get("acceptance_criteria_total"),
+            "missing_metrics": sorted(set(missing_metrics)),
+        }
+        _enrich_from_session_state(run_entry, sessions_dir)
+        runs.append(run_entry)
     return runs
 
 
@@ -390,38 +466,57 @@ def _render_task_sidebar(runs: List[Dict[str, Any]]) -> str:
 def _render_steps_table(run: Dict[str, Any]) -> str:
     summaries = _aggregate_steps(run.get("steps") or [], run.get("command_ref") or "Flow")
     if not summaries:
-        return '<p class="empty">Chưa có bảng tóm tắt từng bước cho phiên này (hoặc không có telemetry theo step).</p>'
+        return '<p class="empty">Chưa có bảng tóm tắt từng bước cho phiên này.</p>'
     show_agent = any(s.get("agent") for s in summaries)
+    show_tokens = any(
+        s.get("input_tokens") is not None or s.get("output_tokens") is not None or s.get("cached_tokens") is not None
+        for s in summaries
+    )
+    show_requests = any(s.get("request_count") is not None for s in summaries)
+    show_tools = any(s.get("tool_call_count") is not None for s in summaries)
     show_cost = any(s.get("cost") is not None for s in summaries)
     show_prompt = any(s.get("prompt_ref") or s.get("prompt_excerpt") for s in summaries)
     show_note = any(s.get("note") for s in summaries)
 
-    headers = ["Turns", "Model", "Input", "Cached", "Output", "Requests", "Tool calls", "Time"]
+    headers: List[str] = []
     if show_agent:
-        headers.insert(0, "Agent / Flow")
+        headers.append("Agent / Flow")
+    headers.extend(["Turns", "Model"])
+    if show_tokens:
+        headers.extend(["Input", "Cached", "Output"])
     if show_cost:
-        headers.insert(6 if show_agent else 5, "Cost")
+        headers.append("Cost")
+    if show_requests:
+        headers.append("Requests")
+    if show_tools:
+        headers.append("Tool calls")
+    headers.append("Time")
     if show_prompt:
         headers.append("Prompt used")
     if show_note:
-        headers.append("Note")
+        headers.append("Status / Note")
 
     rows: List[str] = []
     for s in summaries:
-        cells = [
-            _safe(s.get("turn_count")),
-            _safe(s.get("model")),
-            _safe(_fmt_num(s.get("input_tokens"))),
-            _safe(_fmt_num(s.get("cached_tokens"))),
-            _safe(_fmt_num(s.get("output_tokens"))),
-            _safe(_fmt_num(s.get("request_count"))),
-            _safe(_fmt_num(s.get("tool_call_count"))),
-            _safe(_fmt_ms(s.get("duration_ms"))),
-        ]
+        cells: List[str] = []
         if show_agent:
-            cells.insert(0, _safe(s.get("agent")))
+            cells.append(_safe(s.get("agent")))
+        cells.extend([_safe(s.get("turn_count")), _safe(s.get("model"))])
+        if show_tokens:
+            cells.extend(
+                [
+                    _safe(_fmt_num(s.get("input_tokens"))),
+                    _safe(_fmt_num(s.get("cached_tokens"))),
+                    _safe(_fmt_num(s.get("output_tokens"))),
+                ]
+            )
         if show_cost:
-            cells.insert(6 if show_agent else 5, _safe(_fmt_cost(s.get("cost"))))
+            cells.append(_safe(_fmt_cost(s.get("cost"))))
+        if show_requests:
+            cells.append(_safe(_fmt_num(s.get("request_count"))))
+        if show_tools:
+            cells.append(_safe(_fmt_num(s.get("tool_call_count"))))
+        cells.append(_safe(_fmt_ms(s.get("duration_ms"))))
         if show_prompt:
             pref = s.get("prompt_ref")
             pex = s.get("prompt_excerpt")
@@ -467,14 +562,16 @@ def _render_task_panel(run: Dict[str, Any], idx: int) -> str:
     desc_html = f"<p>{_safe(run.get('description'))}</p>" if run.get("description") else ""
     models_html = f"<p><strong>Models:</strong> {model_pills}</p>" if model_pills else ""
 
+    tok_hint = (
+        f"in {_fmt_num(run.get('input_tokens'))} / out {_fmt_num(run.get('output_tokens'))} ({run.get('source')})"
+        if run.get("total_tokens") is not None
+        else "not_measured (host chưa cấp telemetry)"
+    )
+    cost_hint = "public API price list" if run.get("cost") is not None else "cần dữ liệu token từ host"
     task_cards = "".join(
         [
-            _render_kpi(
-                "Total tokens",
-                _fmt_num(run.get("total_tokens")),
-                f"in {_fmt_num(run.get('input_tokens'))} / out {_fmt_num(run.get('output_tokens'))} ({run.get('source')})",
-            ),
-            _render_kpi("Estimated cost", _fmt_cost(run.get("cost"), run.get("currency")), "public API price list"),
+            _render_kpi("Total tokens", _fmt_num(run.get("total_tokens")), tok_hint),
+            _render_kpi("Estimated cost", _fmt_cost(run.get("cost"), run.get("currency")), cost_hint),
             _render_kpi("Duration", _fmt_ms(run.get("wall_ms")), time_hint),
             _render_kpi("Outcome", str(run.get("outcome")), f"level: {run.get('completion_level')}"),
         ]
@@ -527,7 +624,7 @@ def render_audit_dashboard(
     )
 
     enabled = is_audit_enabled(layout)
-    all_runs = load_runs(audit_root) if enabled else []
+    all_runs = load_runs(audit_root, sessions_dir=layout.sessions_dir) if enabled else []
     selected = [r for r in all_runs if r.get("month") == target_month]
 
     if not enabled:

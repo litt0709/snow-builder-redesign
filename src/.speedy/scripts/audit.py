@@ -186,6 +186,74 @@ def _git_head_and_branch(root: Path) -> Dict[str, Optional[str]]:
     return {"branch": _run("branch", "--show-current"), "commit": _run("rev-parse", "HEAD")}
 
 
+_INTERNAL_CHANGE_PREFIXES = (
+    ".speedy/",
+    ".agents/",
+    "AGENTS.md",
+    "ai-workspace/",
+    "sessions/",
+    "logs/",
+    "reports/",
+    "plans/",
+    "state/",
+)
+
+
+def _measure_git_changed_files(root: Path, commit_before: Optional[str] = None) -> Optional[List[str]]:
+    """Đo danh sách file mã nguồn/tài liệu ứng dụng thay đổi qua git (bỏ qua artifact nội bộ DevKit)."""
+    try:
+        chk = subprocess.run(
+            ["git", "rev-parse", "--is-inside-work-tree"],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=4,
+        )
+        if chk.returncode != 0 or chk.stdout.strip().lower() != "true":
+            return None
+    except Exception:
+        return None
+
+    changed: set[str] = set()
+    try:
+        if commit_before:
+            diff_proc = subprocess.run(
+                ["git", "diff", "--name-only", f"{commit_before}..HEAD"],
+                cwd=str(root),
+                capture_output=True,
+                text=True,
+                timeout=4,
+            )
+            if diff_proc.returncode == 0:
+                for line in diff_proc.stdout.splitlines():
+                    p = line.strip()
+                    if p:
+                        changed.add(p)
+        st_proc = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=4,
+        )
+        if st_proc.returncode == 0:
+            for line in st_proc.stdout.splitlines():
+                if len(line) > 3:
+                    raw_path = line[3:].strip()
+                    if " -> " in raw_path:
+                        raw_path = raw_path.split(" -> ", 1)[1].strip()
+                    raw_path = raw_path.strip('"')
+                    if raw_path:
+                        changed.add(raw_path)
+    except Exception:
+        return None
+
+    filtered = sorted(
+        p for p in changed if not any(p == pref.rstrip("/") or p.startswith(pref) for pref in _INTERNAL_CHANGE_PREFIXES)
+    )
+    return filtered
+
+
 def _parse_iso_ms(ts: Optional[str]) -> Optional[int]:
     if not ts:
         return None
@@ -404,6 +472,136 @@ def record_audit_event(
     return {"logged": True, "audit_dir": audit_dir, "event_count": len(events)}
 
 
+def record_stage_telemetry(
+    layout: WorkspaceLayout,
+    *,
+    audit_dir: str,
+    stage: str,
+    status: str,
+    model: Optional[str] = None,
+    duration_ms: Optional[int] = None,
+    human_wait_ms: Optional[int] = None,
+    note: Optional[str] = None,
+    retry_count: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Tự động ghi telemetry stage (event + step + model) từ lifecycle/gate mà không cần LLM gọi thủ công."""
+    if not is_audit_enabled(layout):
+        return {"logged": False, "reason": "audit_disabled"}
+
+    dir_path = resolve_within_scope(layout.root, audit_dir)
+    trace_path = dir_path / AUDIT_FILENAMES[1]
+    input_path = dir_path / AUDIT_FILENAMES[0]
+    if not trace_path.is_file():
+        return {"logged": False, "reason": "trace_missing"}
+
+    trace_data = read_json_safe(trace_path)
+    exec_trace = trace_data.setdefault("execution_trace", {})
+    events = exec_trace.setdefault("events", [])
+    steps = exec_trace.setdefault("steps", [])
+
+    now = utc_now_iso()
+    ev: Dict[str, Any] = {
+        "timestamp": now,
+        "category": "stage_transition",
+        "agent": sanitize_text(stage, max_len=60),
+        "enforcement_level": "runtime_enforced",
+        "summary": sanitize_text(note or f"stage:{stage}->{status}", max_len=300),
+    }
+    if model:
+        ev["model"] = sanitize_text(model, max_len=80)
+    if duration_ms is not None and int(duration_ms) >= 0:
+        ev["model_time_ms"] = int(duration_ms)
+    if human_wait_ms is not None and int(human_wait_ms) >= 0:
+        ev["human_wait_ms"] = int(human_wait_ms)
+    events.append(ev)
+
+    exec_trace["turn_count"] = int(exec_trace.get("turn_count") or 0) + 1
+    if retry_count is not None:
+        exec_trace["retry_count"] = int(retry_count)
+
+    if status in {"approved", "awaiting_approval", "failed"} or human_wait_ms is not None:
+        steps.append(
+            {
+                "step_index": len(steps) + 1,
+                "agent": sanitize_text(stage, max_len=60),
+                "model": sanitize_text(model, max_len=80) if model else None,
+                "duration_ms": int(duration_ms) if (duration_ms is not None and int(duration_ms) >= 0) else None,
+                "note": sanitize_text(note or status, max_len=160),
+            }
+        )
+
+    atomic_write_json(trace_path, trace_data)
+
+    if model and input_path.is_file():
+        inp_data = read_json_safe(input_path)
+        inp_data.setdefault("ai_agent_configuration", {}).setdefault("models_by_agent", {})[stage] = str(
+            sanitize_text(model, max_len=80)
+        )
+        atomic_write_json(input_path, inp_data)
+
+    return {"logged": True, "stage": stage, "status": status}
+
+
+def sync_verification_to_audit(
+    layout: WorkspaceLayout,
+    *,
+    audit_dir: str,
+    verify_summary: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Tự động đồng bộ kết quả từ `verify run` sang `03-verification-results.json` và `02-behavior-trace.json`."""
+    if not is_audit_enabled(layout):
+        return {"synced": False, "reason": "audit_disabled"}
+
+    dir_path = resolve_within_scope(layout.root, audit_dir)
+    trace_path = dir_path / AUDIT_FILENAMES[1]
+    ver_path = dir_path / AUDIT_FILENAMES[2]
+    if not ver_path.is_file():
+        return {"synced": False, "reason": "verification_file_missing"}
+
+    f03 = read_json_safe(ver_path)
+    qual = f03.setdefault("quality_verification", {})
+    layers = verify_summary.get("layers") or []
+    total_tool_ms = 0
+    executed_checks = 0
+
+    for layer in layers:
+        if not isinstance(layer, dict):
+            continue
+        lname = str(layer.get("layer") or "")
+        lstatus = str(layer.get("status") or "NOT_APPLICABLE")
+        dur = int(layer.get("duration_ms") or 0)
+        if lstatus != "NOT_APPLICABLE":
+            total_tool_ms += max(0, dur)
+            executed_checks += 1
+        cmd = layer.get("command")
+        cmd_str = " ".join(str(x) for x in cmd) if isinstance(cmd, list) else (str(cmd) if cmd else None)
+        if lname == "unit_integration" and lstatus != "NOT_APPLICABLE":
+            qual["unit_test_result"] = {"status": lstatus.lower(), "command": sanitize_text(cmd_str, max_len=240)}
+        elif lname == "build" and lstatus != "NOT_APPLICABLE":
+            qual["build_status"] = lstatus.lower()
+
+    qual["test_laundering_suspicious"] = bool((verify_summary.get("test_laundering") or {}).get("suspicious"))
+    atomic_write_json(ver_path, f03)
+
+    if trace_path.is_file():
+        f02 = read_json_safe(trace_path)
+        exec_trace = f02.setdefault("execution_trace", {})
+        exec_trace["tool_call_count"] = int(exec_trace.get("tool_call_count") or 0) + max(1, executed_checks)
+        exec_trace.setdefault("events", []).append(
+            {
+                "timestamp": utc_now_iso(),
+                "category": "verification_run",
+                "agent": "tester",
+                "enforcement_level": "runtime_enforced",
+                "tool_time_ms": total_tool_ms,
+                "summary": f"verify:{verify_summary.get('overall_status')} ({executed_checks} checks)",
+            }
+        )
+        atomic_write_json(trace_path, f02)
+
+    return {"synced": True, "tool_time_ms": total_tool_ms, "checks": executed_checks}
+
+
 def finalize_audit(
     layout: WorkspaceLayout,
     *,
@@ -490,10 +688,22 @@ def finalize_audit(
     if files_changed is not None:
         f03["repository_changes"]["change_measurement_status"] = "measured"
         f03["repository_changes"]["files_changed"] = int(files_changed)
+    else:
+        auto_changed = _measure_git_changed_files(layout.root, f01.get("task_identity", {}).get("git_commit_before"))
+        if auto_changed is not None:
+            f03["repository_changes"]["change_measurement_status"] = "measured"
+            f03["repository_changes"]["files_changed"] = len(auto_changed)
+            f03["repository_changes"]["changed_file_paths"] = auto_changed[:50]
 
-    f03["quality_verification"]["build_status"] = build_status
-    f03["quality_verification"]["acceptance_criteria_passed"] = int(ac_passed)
-    f03["quality_verification"]["acceptance_criteria_total"] = int(ac_total)
+    existing_build = f03.get("quality_verification", {}).get("build_status")
+    effective_build = build_status if build_status != "not_available" else (existing_build or "not_available")
+    f03["quality_verification"]["build_status"] = effective_build
+    existing_ac_total = int(f03.get("quality_verification", {}).get("acceptance_criteria_total") or 0)
+    if ac_total > 0 or existing_ac_total == 0:
+        f03["quality_verification"]["acceptance_criteria_passed"] = int(ac_passed)
+        f03["quality_verification"]["acceptance_criteria_total"] = int(ac_total)
+    eff_ac_passed = int(f03["quality_verification"]["acceptance_criteria_passed"])
+    eff_ac_total = int(f03["quality_verification"]["acceptance_criteria_total"])
     f03["outcome_failure_analysis"]["outcome"] = outcome
     f03["outcome_failure_analysis"]["completion_level"] = completion_level
     f03["outcome_failure_analysis"]["remaining_work"] = None if outcome == "success" else "Pending verification or follow-up."
@@ -501,8 +711,8 @@ def finalize_audit(
     summary = f04["final_summary"]
     summary["outcome"] = outcome
     summary["completion_level"] = completion_level
-    summary["acceptance_criteria_passed_total"] = f"{ac_passed}/{ac_total}"
-    summary["build_test_security_status"] = build_status
+    summary["acceptance_criteria_passed_total"] = f"{eff_ac_passed}/{eff_ac_total}"
+    summary["build_test_security_status"] = effective_build
     summary["total_duration_ms"] = wall_ms
     summary["files_changed"] = f03["repository_changes"]["files_changed"]
     summary["missing_metrics"] = usage_cost["missing_metrics"]

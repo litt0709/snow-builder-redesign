@@ -399,7 +399,15 @@ def run_verification(
             state.setdefault("verification", []).append(summary)
             state["code_snapshot"] = snapshot
 
-        mutate_session_state_cas(layout, sid, _record, owner="verify_runner")
+        updated_st = mutate_session_state_cas(layout, sid, _record, owner="verify_runner")
+        audit_dir = updated_st.get("audit_dir")
+        if audit_dir:
+            try:
+                from audit import sync_verification_to_audit
+
+                sync_verification_to_audit(layout, audit_dir=audit_dir, verify_summary=summary)
+            except Exception:
+                pass
 
     if any_failed:
         raise SpeedyError(

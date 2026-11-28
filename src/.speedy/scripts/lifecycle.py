@@ -605,8 +605,58 @@ def transition_stage(
             }
         )
 
-    updated = mutate_session_state_cas(layout, sid, _mutator, expected_revision=expected_revision)
+    prev_ts_box: Dict[str, Optional[str]] = {"ts": None}
+
+    def _mutator_capture_ts(state: Dict[str, Any]) -> None:
+        st_info = (state.get("stages") or {}).get(stage_id, {})
+        prev_ts_box["ts"] = st_info.get("updated_at") or state.get("updated_at") or state.get("created_at")
+        _mutator(state)
+
+    updated = mutate_session_state_cas(layout, sid, _mutator_capture_ts, expected_revision=expected_revision)
     result_summary["state_revision"] = updated["state_revision"]
+
+    # Tự động ghi telemetry sang Audit 4 lớp (non-fatal)
+    audit_dir = updated.get("audit_dir")
+    if audit_dir:
+        try:
+            from audit import AUDIT_FILENAMES, _parse_iso_ms, finalize_audit, record_stage_telemetry
+
+            model_info = select_gemini_model(
+                stage_id,
+                high_risk=bool(updated.get("high_risk")),
+                complex_architecture=bool(updated.get("complex_architecture")),
+                repeated_failure=int(updated.get("uow_attempts", 0)) >= 2,
+            )
+            dur_ms: Optional[int] = None
+            if target_status in {StageStatus.APPROVED.value, StageStatus.AWAITING_APPROVAL.value, StageStatus.FAILED.value}:
+                start_ms = _parse_iso_ms(prev_ts_box.get("ts"))
+                end_ms = _parse_iso_ms(utc_now_iso())
+                if start_ms is not None and end_ms is not None:
+                    dur_ms = max(0, end_ms - start_ms)
+            record_stage_telemetry(
+                layout,
+                audit_dir=audit_dir,
+                stage=stage_id,
+                status=target_status,
+                model=model_info.get("model"),
+                duration_ms=dur_ms,
+                note=failure_reason or target_status,
+                retry_count=int(updated.get("retry_count", 0)),
+            )
+            if stage_id == "wrapup" and target_status == StageStatus.APPROVED.value:
+                inp_file = resolve_within_scope(layout.root, audit_dir) / AUDIT_FILENAMES[0]
+                if inp_file.is_file():
+                    inp_data = read_json_safe(inp_file)
+                    if not (inp_data.get("task_identity") or {}).get("ended_at"):
+                        finalize_audit(
+                            layout,
+                            audit_dir=audit_dir,
+                            outcome="success",
+                            completion_level="verified",
+                        )
+        except Exception:
+            pass
+
     return result_summary
 
 
@@ -824,10 +874,38 @@ def record_gate_decision(
             }
         )
 
-    updated = mutate_session_state_cas(layout, sid, _mutator, owner="gate_decision")
+    gate_ts_box: Dict[str, Optional[str]] = {"ts": None}
+
+    def _mutator_with_ts(state: Dict[str, Any]) -> None:
+        gate_ts_box["ts"] = (state.get("stages") or {}).get(stage_id, {}).get("updated_at")
+        _mutator(state)
+
+    updated = mutate_session_state_cas(layout, sid, _mutator_with_ts, owner="gate_decision")
     outcome["sid"] = sid
     outcome["state_revision"] = updated["state_revision"]
     outcome["next_action"] = updated["next_action"]
+    if updated.get("audit_dir"):
+        try:
+            from audit import _parse_iso_ms, record_stage_telemetry
+
+            wait_ms: Optional[int] = None
+            s_ms = _parse_iso_ms(gate_ts_box.get("ts"))
+            e_ms = _parse_iso_ms(utc_now_iso())
+            if s_ms is not None and e_ms is not None:
+                wait_ms = max(0, e_ms - s_ms)
+            model_info = select_gemini_model(stage_id, high_risk=bool(updated.get("high_risk")))
+            record_stage_telemetry(
+                layout,
+                audit_dir=updated["audit_dir"],
+                stage=stage_id,
+                status=decision,
+                model=model_info.get("model"),
+                human_wait_ms=wait_ms,
+                note=f"gate:{decision}",
+                retry_count=int(updated.get("retry_count", 0)),
+            )
+        except Exception:
+            pass
     if decision == "approve" and stage_id == "docs":
         _refresh_docs_harness(layout, outcome)
     return outcome

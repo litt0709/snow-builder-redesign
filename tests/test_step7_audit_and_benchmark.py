@@ -188,6 +188,64 @@ class TestStep7AuditAndBenchmark(unittest.TestCase):
             self.assertEqual(report["held_out"]["oracle_recall_rate"], 1.0)
             self.assertGreaterEqual(report["overall"]["mean_bytes_reduction_ratio"], 0.65)
 
+    def test_auto_stage_verification_git_telemetry_and_viewer_enrichment(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ws = Path(tmp) / "app"
+            shutil.copytree(SRC_ROOT, ws)
+            # Khởi tạo git repo để kiểm tra tự đo files_changed
+            subprocess.run(["git", "init", "-q"], cwd=str(ws), check=True)
+            subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=str(ws), check=True)
+            subprocess.run(["git", "config", "user.name", "Test"], cwd=str(ws), check=True)
+            (ws / "app.py").write_text("x = 1\n", encoding="utf-8")
+            subprocess.run(["git", "add", "app.py"], cwd=str(ws), check=True)
+            subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=str(ws), check=True)
+
+            s_res = json.loads(
+                _cli(ws, "session", "new", "--slug", "auto-tel", "--goal", "Add health endpoint").stdout
+            )
+            sid = s_res["sid"]
+            audit_dir = ws / s_res["audit"]["audit_dir"]
+
+            # Ghi handoff analyst hợp lệ và chạy state complete -> tự ghi stage telemetry + models_by_agent!
+            (ws / "ai-workspace" / "sessions" / sid / "handoff-1-analyst.md").write_text(
+                f"# Brief\n\n## Summary\nAdd health.\n\n## Scope\n- app.py\n\n### Acceptance Criteria\n- **AC-001**: OK.\n\n"
+                f"## Risks\nLow.\n\n## Dependencies\nNone.\n\n## Open questions\nKhông có.\n\n"
+                f"## Resume Metadata\n```json\n{{\"sid\":\"{sid}\",\"stage\":\"analyst\",\"revision\":1,\"input_refs\":[],\"next_action\":\"architect\",\"verification_refs\":[]}}\n```\n",
+                encoding="utf-8",
+            )
+            cmp_res = _cli(ws, "state", "complete", "--sid", sid, "--stage", "analyst")
+            self.assertEqual(cmp_res.returncode, 0, cmp_res.stderr)
+
+            f01 = json.loads((audit_dir / "01-input-context.json").read_text(encoding="utf-8"))
+            f02 = json.loads((audit_dir / "02-behavior-trace.json").read_text(encoding="utf-8"))
+            self.assertIn("analyst", f01["ai_agent_configuration"]["models_by_agent"])
+            self.assertGreaterEqual(len(f02["execution_trace"]["steps"]), 1)
+
+            # Chỉnh sửa app.py và chạy verify run -> tự sync unit_test_result & tool_time_ms!
+            (ws / "app.py").write_text("x = 2\n", encoding="utf-8")
+            ver = _cli(ws, "verify", "run", "--sid", sid, "--check", f"unit_integration={sys.executable} -c \"assert 1==1\"")
+            self.assertEqual(ver.returncode, 0, ver.stderr)
+            f03 = json.loads((audit_dir / "03-verification-results.json").read_text(encoding="utf-8"))
+            self.assertEqual(f03["quality_verification"]["unit_test_result"]["status"], "pass")
+
+            # Finalize không truyền --files-changed -> tự đo app.py qua git!
+            fin = json.loads(
+                _cli(ws, "audit", "finalize", "--audit-dir", s_res["audit"]["audit_dir"], "--outcome", "success", "--completion-level", "verified", "--ac-passed", "1", "--ac-total", "1").stdout
+            )
+            self.assertTrue(fin["finalized"])
+            f03_after = json.loads((audit_dir / "03-verification-results.json").read_text(encoding="utf-8"))
+            self.assertEqual(f03_after["repository_changes"]["change_measurement_status"], "measured")
+            self.assertEqual(f03_after["repository_changes"]["files_changed"], 1)
+            self.assertIn("app.py", f03_after["repository_changes"]["changed_file_paths"])
+
+            # Audit-view hiển thị đầy đủ Model usage, Step summary (không cột token null), Unit test = pass, Files changed = 1
+            av = json.loads(_cli(ws, "audit-view", "--month", sid[:7], "--no-open").stdout)
+            html_out = Path(av["path"]).read_text(encoding="utf-8")
+            self.assertIn("Gemini Neon", html_out)
+            self.assertIn("analyst", html_out)
+            self.assertIn("N/A", html_out)
+            self.assertNotIn("<th>Input</th>", html_out)
+
 
 if __name__ == "__main__":
     unittest.main()
